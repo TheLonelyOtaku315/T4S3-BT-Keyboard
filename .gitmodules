@@ -1,0 +1,6 @@
+[submodule "lib/T-Display-S3-AMOLED"]
+	path = lib/T-Display-S3-AMOLED
+	url = https://github.com/Xinyuan-LilyGO/T-Display-S3-AMOLED.git
+[submodule "lib/LilyGo-AMOLED-Series-Touch"]
+	path = lib/LilyGo-AMOLED-Series-Touch
+	url = https://github.com/Xinyuan-LilyGO/LilyGo-AMOLED-Series.git

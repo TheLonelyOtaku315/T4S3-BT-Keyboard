@@ -44,6 +44,7 @@ lv_obj_t *tabview;
 lv_obj_t *page1;
 lv_obj_t *page2;
 lv_obj_t *page3;
+lv_obj_t *page4;
 
 lv_obj_t *btn1;
 lv_obj_t *btn2;
@@ -86,9 +87,18 @@ void hideStatusScreen()
     }
 }
 
-void showConnectedPage()
+void showMediaPage()
 {
     hideStatusScreen();
+
+    // Create page3 on first connection if it doesn't exist
+    if (page3 == NULL)
+    {
+        page3 = lv_tabview_add_tab(tabview, "Connected");
+        setupMediaControlsPage(page3);
+        Serial.println("Media controls page created on connection!");
+    }
+
     lv_tabview_set_act(tabview, 2, LV_ANIM_ON); // Switch to page 3 (index 2)
 }
 
@@ -199,7 +209,7 @@ lv_obj_t *create_media_button(lv_obj_t *parent, const char *icon, const char *la
 }
 
 // Browser button callback
-void browser_btn_event_cb(lv_event_t *e)
+void browserButtonEventCallback(lv_event_t *e)
 {
     if (!bleKeyboard.isConnected())
     {
@@ -213,8 +223,30 @@ void browser_btn_event_cb(lv_event_t *e)
     Serial.println("URL sent");
 }
 
+// Calculator button callback
+void calculatorButtonEventCallback(lv_event_t *e)
+{
+    if (!bleKeyboard.isConnected())
+    {
+        Serial.println("BLE not connected");
+        return;
+    }
+
+    // Send Windows + R to open Run dialog, then type calc and press Enter
+    bleKeyboard.press(KEY_LEFT_GUI);
+    bleKeyboard.press('r');
+    delay(50);
+    bleKeyboard.releaseAll();
+    delay(200);
+    bleKeyboard.print("calc");
+    delay(100);
+    bleKeyboard.write(KEY_RETURN);
+
+    Serial.println("Calculator opened");
+}
+
 // Device connection button callback
-void btn_event_cb(lv_event_t *e)
+void buttonEventCallback(lv_event_t *e)
 {
     const char *message = (const char *)lv_event_get_user_data(e);
     Serial.println(message);
@@ -232,7 +264,7 @@ void btn_event_cb(lv_event_t *e)
         {
             showStatusScreen("Connected!");
             delay(1000);
-            showConnectedPage();
+            showMediaPage();
         }
     }
     else if (btn == btn2)
@@ -246,12 +278,12 @@ void btn_event_cb(lv_event_t *e)
         {
             showStatusScreen("Connected!");
             delay(1000);
-            showConnectedPage();
+            showMediaPage();
         }
     }
 }
 
-void setupPage1(lv_obj_t *parent)
+void setupConnectionPage(lv_obj_t *parent)
 {
     // 2x2 grid
     static lv_coord_t col_dsc[] = {LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
@@ -270,7 +302,7 @@ void setupPage1(lv_obj_t *parent)
     // Device 1
     btn1 = lv_btn_create(grid);
     lv_obj_set_grid_cell(btn1, LV_GRID_ALIGN_STRETCH, 0, 1, LV_GRID_ALIGN_STRETCH, 0, 1);
-    lv_obj_add_event_cb(btn1, btn_event_cb, LV_EVENT_CLICKED, (void *)"Connecting to Device 1");
+    lv_obj_add_event_cb(btn1, buttonEventCallback, LV_EVENT_CLICKED, (void *)"Connecting to Device 1");
     lv_obj_set_style_bg_color(btn1, lv_color_make(0, 130, 252), 0);
 
     lv_obj_t *label1 = lv_label_create(btn1);
@@ -281,7 +313,7 @@ void setupPage1(lv_obj_t *parent)
     // Device 2
     btn2 = lv_btn_create(grid);
     lv_obj_set_grid_cell(btn2, LV_GRID_ALIGN_STRETCH, 1, 1, LV_GRID_ALIGN_STRETCH, 0, 1);
-    lv_obj_add_event_cb(btn2, btn_event_cb, LV_EVENT_CLICKED, (void *)"Connecting to Device 2");
+    lv_obj_add_event_cb(btn2, buttonEventCallback, LV_EVENT_CLICKED, (void *)"Connecting to Device 2");
     lv_obj_set_style_bg_color(btn2, lv_color_make(255, 130, 0), 0);
 
     lv_obj_t *label2 = lv_label_create(btn2);
@@ -292,7 +324,7 @@ void setupPage1(lv_obj_t *parent)
     // Device 3
     btn3 = lv_btn_create(grid);
     lv_obj_set_grid_cell(btn3, LV_GRID_ALIGN_STRETCH, 0, 1, LV_GRID_ALIGN_STRETCH, 1, 1);
-    lv_obj_add_event_cb(btn3, btn_event_cb, LV_EVENT_CLICKED, (void *)"Device 3 (Not implemented)");
+    lv_obj_add_event_cb(btn3, buttonEventCallback, LV_EVENT_CLICKED, (void *)"Device 3 (Not implemented)");
     lv_obj_set_style_bg_color(btn3, lv_color_make(0, 200, 100), 0);
 
     lv_obj_t *label3 = lv_label_create(btn3);
@@ -303,7 +335,7 @@ void setupPage1(lv_obj_t *parent)
     // Settings
     btn4 = lv_btn_create(grid);
     lv_obj_set_grid_cell(btn4, LV_GRID_ALIGN_STRETCH, 1, 1, LV_GRID_ALIGN_STRETCH, 1, 1);
-    lv_obj_add_event_cb(btn4, btn_event_cb, LV_EVENT_CLICKED, (void *)"Settings");
+    lv_obj_add_event_cb(btn4, buttonEventCallback, LV_EVENT_CLICKED, (void *)"Settings");
     lv_obj_set_style_bg_color(btn4, lv_color_make(255, 0, 200), 0);
 
     lv_obj_t *label4 = lv_label_create(btn4);
@@ -312,7 +344,7 @@ void setupPage1(lv_obj_t *parent)
     lv_obj_center(label4);
 }
 
-void setupPage2(lv_obj_t *parent)
+void setupInfoPage(lv_obj_t *parent)
 {
     lv_obj_t *container = lv_obj_create(parent);
     lv_obj_set_size(container, LV_PCT(100), LV_PCT(100));
@@ -367,24 +399,6 @@ void setupMediaControlsPage(lv_obj_t *parent)
     lv_obj_set_style_shadow_opa(glass, LV_OPA_40, 0);
     lv_obj_set_style_pad_all(glass, 10, 0);
 
-    // Create connection status banner at top
-    connection_banner = lv_label_create(glass);
-    lv_label_set_text(connection_banner, "DISCONNECTED");
-    lv_obj_set_size(connection_banner, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-    lv_obj_align(connection_banner, LV_ALIGN_TOP_MID, 0, 10);
-
-    // Banner styling
-    lv_obj_set_style_bg_color(connection_banner, lv_color_make(255, 0, 0), 0);
-    lv_obj_set_style_bg_opa(connection_banner, LV_OPA_30, 0);
-    lv_obj_set_style_border_color(connection_banner, lv_color_make(255, 0, 0), 0);
-    lv_obj_set_style_border_width(connection_banner, 1, 0);
-    lv_obj_set_style_border_opa(connection_banner, LV_OPA_70, 0);
-    lv_obj_set_style_radius(connection_banner, 4, 0);
-    lv_obj_set_style_pad_hor(connection_banner, 8, 0);
-    lv_obj_set_style_pad_ver(connection_banner, 4, 0);
-    lv_obj_set_style_text_color(connection_banner, lv_color_make(255, 0, 0), 0);
-    lv_obj_set_style_text_font(connection_banner, &lv_font_montserrat_12, 0);
-
     // Create grid container (below banner)
     lv_obj_t *grid = lv_obj_create(glass);
     lv_obj_set_size(grid, LV_PCT(100), LV_PCT(100));
@@ -430,17 +444,147 @@ void setupMediaControlsPage(lv_obj_t *parent)
     Serial.println("Media controls page created with status banner!");
 }
 
+// Create utility button (for browser, calculator, etc.)
+lv_obj_t *create_utility_button(lv_obj_t *parent, const char *icon, const char *label,
+                                lv_event_cb_t callback, lv_color_t color, uint8_t col, uint8_t row)
+{
+    lv_obj_t *btn = lv_btn_create(parent);
+    lv_obj_set_grid_cell(btn, LV_GRID_ALIGN_STRETCH, col, 1, LV_GRID_ALIGN_STRETCH, row, 1);
+
+    // Glass effect styling
+    lv_obj_set_style_bg_color(btn, lv_color_make(40, 40, 60), 0);
+    lv_obj_set_style_bg_opa(btn, LV_OPA_50, 0);
+    lv_obj_set_style_border_color(btn, lv_color_make(80, 80, 120), 0);
+    lv_obj_set_style_border_width(btn, 1, 0);
+    lv_obj_set_style_border_opa(btn, LV_OPA_60, 0);
+    lv_obj_set_style_radius(btn, 8, 0);
+
+    // Hover effect (pressed state)
+    lv_obj_set_style_bg_opa(btn, LV_OPA_70, LV_STATE_PRESSED);
+
+    // Container for icon and label (flex column)
+    lv_obj_set_flex_flow(btn, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(btn, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_style_pad_all(btn, 8, 0);
+
+    // Icon (using Unicode symbols)
+    lv_obj_t *icon_label = lv_label_create(btn);
+    lv_label_set_text(icon_label, icon);
+    lv_obj_set_style_text_font(icon_label, &lv_font_montserrat_48, 0);
+    lv_obj_set_style_text_color(icon_label, color, 0);
+
+    // Text label - UPPERCASE and bold style
+    lv_obj_t *text_label = lv_label_create(btn);
+    lv_label_set_text(text_label, label);
+    lv_obj_set_style_text_font(text_label, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_color(text_label, lv_color_white(), 0);
+    lv_label_set_long_mode(text_label, LV_LABEL_LONG_WRAP);
+    lv_obj_set_style_text_align(text_label, LV_TEXT_ALIGN_CENTER, 0);
+
+    // Add callback
+    lv_obj_add_event_cb(btn, callback, LV_EVENT_CLICKED, NULL);
+
+    return btn;
+}
+
+void setupUtilityPage(lv_obj_t *parent)
+{
+    // Create glass container
+    lv_obj_t *glass = lv_obj_create(parent);
+    lv_obj_set_size(glass, LV_PCT(100), LV_PCT(100));
+
+    // Glass effect background
+    lv_obj_set_style_bg_color(glass, lv_color_make(20, 20, 40), 0);
+    lv_obj_set_style_bg_opa(glass, LV_OPA_30, 0);
+    lv_obj_set_style_border_color(glass, lv_color_make(80, 80, 120), 0);
+    lv_obj_set_style_border_width(glass, 2, 0);
+    lv_obj_set_style_border_opa(glass, LV_OPA_50, 0);
+    lv_obj_set_style_radius(glass, 16, 0);
+    lv_obj_set_style_shadow_width(glass, 30, 0);
+    lv_obj_set_style_shadow_color(glass, lv_color_black(), 0);
+    lv_obj_set_style_shadow_opa(glass, LV_OPA_40, 0);
+    lv_obj_set_style_pad_all(glass, 10, 0);
+
+    // Info panel at top
+    lv_obj_t *info_panel = lv_obj_create(glass);
+    lv_obj_set_size(info_panel, LV_PCT(100), 80);
+    lv_obj_align(info_panel, LV_ALIGN_TOP_MID, 0, 0);
+    lv_obj_set_style_bg_color(info_panel, lv_color_make(40, 40, 60), 0);
+    lv_obj_set_style_bg_opa(info_panel, LV_OPA_50, 0);
+    lv_obj_set_style_border_color(info_panel, lv_color_make(80, 80, 120), 0);
+    lv_obj_set_style_border_width(info_panel, 1, 0);
+    lv_obj_set_style_border_opa(info_panel, LV_OPA_60, 0);
+    lv_obj_set_style_radius(info_panel, 8, 0);
+    lv_obj_set_flex_flow(info_panel, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(info_panel, LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+
+    // Time display
+    lv_obj_t *time_label = lv_label_create(info_panel);
+    lv_label_set_text(time_label, "12:34");
+    lv_obj_set_style_text_font(time_label, &lv_font_montserrat_24, 0);
+    lv_obj_set_style_text_color(time_label, lv_color_make(100, 200, 255), 0);
+
+    // Battery display
+    lv_obj_t *battery_label = lv_label_create(info_panel);
+    lv_label_set_text(battery_label, LV_SYMBOL_BATTERY_FULL " 85%");
+    lv_obj_set_style_text_font(battery_label, &lv_font_montserrat_24, 0);
+    lv_obj_set_style_text_color(battery_label, lv_color_make(100, 255, 150), 0);
+
+    // Connection status
+    lv_obj_t *conn_label = lv_label_create(info_panel);
+    lv_label_set_text(conn_label, LV_SYMBOL_BLUETOOTH " ON");
+    lv_obj_set_style_text_font(conn_label, &lv_font_montserrat_20, 0);
+    lv_obj_set_style_text_color(conn_label, lv_color_make(150, 150, 255), 0);
+
+    // Create grid container for buttons
+    lv_obj_t *grid = lv_obj_create(glass);
+    lv_obj_set_size(grid, LV_PCT(100), LV_PCT(100));
+    lv_obj_align(grid, LV_ALIGN_BOTTOM_MID, 0, 0);
+    lv_obj_set_style_bg_opa(grid, LV_OPA_TRANSP, 0);
+    lv_obj_set_style_border_width(grid, 0, 0);
+    lv_obj_set_style_pad_top(grid, 90, 0); // Space for info panel
+
+    // Setup 2x2 grid layout
+    static lv_coord_t col_dsc[] = {LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
+    static lv_coord_t row_dsc[] = {LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
+
+    lv_obj_set_layout(grid, LV_LAYOUT_GRID);
+    lv_obj_set_grid_dsc_array(grid, col_dsc, row_dsc);
+    lv_obj_set_style_pad_all(grid, 5, 0);
+    lv_obj_set_style_pad_column(grid, 10, 0);
+    lv_obj_set_style_pad_row(grid, 10, 0);
+
+    // Create buttons (2 columns x 2 rows)
+    // Row 0
+    create_utility_button(grid, LV_SYMBOL_IMAGE, "BROWSER", browserButtonEventCallback,
+                          lv_color_make(100, 150, 255), 0, 0);
+
+    create_utility_button(grid, "#", "CALCULATOR", calculatorButtonEventCallback,
+                          lv_color_make(255, 200, 100), 1, 0);
+
+    // Row 1 - Add more utility buttons here
+    create_utility_button(grid, LV_SYMBOL_FILE, "NOTEPAD", browserButtonEventCallback,
+                          lv_color_make(150, 255, 150), 0, 1);
+
+    create_utility_button(grid, LV_SYMBOL_SETTINGS, "SETTINGS", browserButtonEventCallback,
+                          lv_color_make(255, 150, 200), 1, 1);
+
+    Serial.println("Utility page created with info panel!");
+}
+
 void setupUI()
 {
     tabview = lv_tabview_create(lv_scr_act(), LV_DIR_TOP, 0);
+    lv_obj_set_size(tabview, LV_PCT(100), LV_PCT(100));
 
     page1 = lv_tabview_add_tab(tabview, "Connections");
     page2 = lv_tabview_add_tab(tabview, "Board Info");
-    page3 = lv_tabview_add_tab(tabview, "Connected");
+    page4 = lv_tabview_add_tab(tabview, "Utilities");
+    // page3 will be created dynamically when first connected
 
-    setupPage1(page1);
-    setupPage2(page2);
-    setupMediaControlsPage(page3);
+    setupConnectionPage(page1);
+    setupInfoPage(page2);
+    setupUtilityPage(page4);
 
-    Serial.println("UI ready with 3 pages!");
+    Serial.println("UI ready with 3 pages! (Media page will appear on connection)");
 }

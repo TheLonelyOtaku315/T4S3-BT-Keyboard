@@ -25,5 +25,6 @@ void setupMediaPage(lv_obj_t *parent); // Connected page
 void showStatusScreen(const char *message);
 void hideStatusScreen();
 void showMediaPage();
+void updateBatteryDisplay();
 void buttonEventCallback(lv_event_t *e);
 void browserButtonEventCallback(lv_event_t *e);

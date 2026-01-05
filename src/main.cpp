@@ -116,5 +116,13 @@ void loop()
     // Check display timeout for auto-dim and sleep
     checkDisplayTimeout();
 
+    // Update battery display every 10 seconds
+    static unsigned long lastBatteryUpdate = 0;
+    if (millis() - lastBatteryUpdate >= 10000)
+    {
+        updateBatteryDisplay();
+        lastBatteryUpdate = millis();
+    }
+
     delay(5);
 }

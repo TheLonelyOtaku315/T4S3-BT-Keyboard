@@ -3,6 +3,10 @@
 #include <Arduino.h>
 #include <BleKeyboard.h>
 #include <esp_gap_ble_api.h>
+#include "LilyGo_AMOLED.h"
+
+// External references
+extern LilyGo_Class amoled;
 
 // Bluetooth keyboard object
 BleKeyboard bleKeyboard("T4-S3 Keyboard", "LilyGO", 100);
@@ -56,6 +60,8 @@ lv_obj_t *status_label = NULL;
 
 lv_obj_t *media_page = NULL;
 lv_obj_t *connection_banner = NULL;
+lv_obj_t *battery_label = NULL;
+lv_obj_t *battery_label_util = NULL;
 
 // Show status overlay (Connecting...)
 void showStatusScreen(const char *message)
@@ -97,6 +103,11 @@ void showMediaPage()
         page3 = lv_tabview_add_tab(tabview, "Connected");
         setupMediaControlsPage(page3);
         Serial.println("Media controls page created on connection!");
+    }
+    if (page4 == NULL)
+    {
+        page4 = lv_tabview_add_tab(tabview, "Utilities");
+        Serial.println("Utilities page created on connection!");
     }
 
     lv_tabview_set_act(tabview, 2, LV_ANIM_ON); // Switch to page 3 (index 2)
@@ -217,10 +228,18 @@ void browserButtonEventCallback(lv_event_t *e)
         return;
     }
 
+    // Open Run dialog (Win+R), then launch URL in default browser
+    bleKeyboard.press(KEY_LEFT_GUI); // Windows key
+    bleKeyboard.press('r');          // R key
+    delay(50);
+    bleKeyboard.releaseAll();
+    delay(50); // Wait for Run dialog to open
+
     bleKeyboard.print("https://google.com");
+    delay(50);
     bleKeyboard.write(KEY_RETURN);
 
-    Serial.println("URL sent");
+    Serial.println("Browser opened with URL");
 }
 
 // Calculator button callback
@@ -237,9 +256,9 @@ void calculatorButtonEventCallback(lv_event_t *e)
     bleKeyboard.press('r');
     delay(50);
     bleKeyboard.releaseAll();
-    delay(200);
+    delay(50);
     bleKeyboard.print("calc");
-    delay(100);
+    delay(50);
     bleKeyboard.write(KEY_RETURN);
 
     Serial.println("Calculator opened");
@@ -375,6 +394,12 @@ void setupInfoPage(lv_obj_t *parent)
     lv_obj_t *mac = lv_label_create(container);
     lv_label_set_text(mac, macStr.c_str());
     lv_obj_set_style_text_font(mac, &lv_font_montserrat_16, 0);
+
+    // Battery info (store reference globally)
+    battery_label = lv_label_create(container);
+    lv_label_set_text(battery_label, "Battery: Checking...");
+    lv_obj_set_style_text_font(battery_label, &lv_font_montserrat_20, 0);
+    lv_obj_set_style_text_color(battery_label, lv_color_make(100, 255, 150), 0);
 
     lv_obj_t *hint = lv_label_create(container);
     lv_label_set_text(hint, "\n< Swipe to return");
@@ -524,11 +549,11 @@ void setupUtilityPage(lv_obj_t *parent)
     lv_obj_set_style_text_font(time_label, &lv_font_montserrat_24, 0);
     lv_obj_set_style_text_color(time_label, lv_color_make(100, 200, 255), 0);
 
-    // Battery display
-    lv_obj_t *battery_label = lv_label_create(info_panel);
-    lv_label_set_text(battery_label, LV_SYMBOL_BATTERY_FULL " 85%");
-    lv_obj_set_style_text_font(battery_label, &lv_font_montserrat_24, 0);
-    lv_obj_set_style_text_color(battery_label, lv_color_make(100, 255, 150), 0);
+    // Battery display (store reference globally)
+    battery_label_util = lv_label_create(info_panel);
+    lv_label_set_text(battery_label_util, LV_SYMBOL_BATTERY_FULL " --");
+    lv_obj_set_style_text_font(battery_label_util, &lv_font_montserrat_24, 0);
+    lv_obj_set_style_text_color(battery_label_util, lv_color_make(100, 255, 150), 0);
 
     // Connection status
     lv_obj_t *conn_label = lv_label_create(info_panel);
@@ -572,6 +597,95 @@ void setupUtilityPage(lv_obj_t *parent)
     Serial.println("Utility page created with info panel!");
 }
 
+// Battery monitoring function
+void updateBatteryDisplay()
+{
+    static char battText[32];
+    uint16_t battVoltage = amoled.getBattVoltage();
+    bool isCharging = amoled.isVbusIn();
+
+    if (battVoltage > 0)
+    {
+        // Calculate battery percentage based on voltage
+        // 4.2V = 100%, 3.7V = 50%, 3.3V = 0%
+        int percentage = 0;
+        if (battVoltage >= 4100)
+        {
+            percentage = 100;
+        }
+        else if (battVoltage >= 3700)
+        {
+            percentage = 50 + ((battVoltage - 3700) * 50) / 400;
+        }
+        else if (battVoltage >= 3300)
+        {
+            percentage = ((battVoltage - 3300) * 50) / 400;
+        }
+
+        // Choose battery icon based on percentage
+        const char *icon;
+        if (percentage >= 90)
+            icon = LV_SYMBOL_BATTERY_FULL;
+        else if (percentage >= 60)
+            icon = LV_SYMBOL_BATTERY_3;
+        else if (percentage >= 30)
+            icon = LV_SYMBOL_BATTERY_2;
+        else if (percentage >= 10)
+            icon = LV_SYMBOL_BATTERY_1;
+        else
+            icon = LV_SYMBOL_BATTERY_EMPTY;
+
+        if (isCharging)
+        {
+            snprintf(battText, sizeof(battText), "%s %d%% " LV_SYMBOL_CHARGE, icon, percentage);
+        }
+        else
+        {
+            snprintf(battText, sizeof(battText), "%s %d%%", icon, percentage);
+        }
+
+        // Update color based on battery level
+        lv_color_t color;
+        if (percentage >= 30)
+        {
+            color = lv_color_make(100, 255, 150); // Green
+        }
+        else if (percentage >= 15)
+        {
+            color = lv_color_make(255, 200, 100); // Orange
+        }
+        else
+        {
+            color = lv_color_make(255, 100, 100); // Red
+        }
+
+        // Update all battery labels
+        if (battery_label != NULL)
+        {
+            lv_label_set_text(battery_label, battText);
+            lv_obj_set_style_text_color(battery_label, color, 0);
+        }
+        if (battery_label_util != NULL)
+        {
+            lv_label_set_text(battery_label_util, battText);
+            lv_obj_set_style_text_color(battery_label_util, color, 0);
+        }
+    }
+    else
+    {
+        // No battery detected
+        const char *noBattText = LV_SYMBOL_BATTERY_EMPTY " USB";
+        if (battery_label != NULL)
+        {
+            lv_label_set_text(battery_label, noBattText);
+        }
+        if (battery_label_util != NULL)
+        {
+            lv_label_set_text(battery_label_util, noBattText);
+        }
+    }
+}
+
 void setupUI()
 {
     tabview = lv_tabview_create(lv_scr_act(), LV_DIR_TOP, 0);
@@ -579,12 +693,15 @@ void setupUI()
 
     page1 = lv_tabview_add_tab(tabview, "Connections");
     page2 = lv_tabview_add_tab(tabview, "Board Info");
-    page4 = lv_tabview_add_tab(tabview, "Utilities");
+    // page4 = lv_tabview_add_tab(tabview, "Utilities");
     // page3 will be created dynamically when first connected
 
     setupConnectionPage(page1);
     setupInfoPage(page2);
     setupUtilityPage(page4);
+
+    // Initial battery update
+    updateBatteryDisplay();
 
     Serial.println("UI ready with 3 pages! (Media page will appear on connection)");
 }

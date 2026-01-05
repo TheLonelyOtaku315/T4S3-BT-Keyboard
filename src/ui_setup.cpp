@@ -1,10 +1,44 @@
 #include "ui_setup.h"
+#include "media_controls.h"
 #include <Arduino.h>
 #include <BleKeyboard.h>
+#include <esp_gap_ble_api.h>
 
-// Bluetooth keyboard object with improved stability settings
-// Battery level set to 100 to prevent connection issues
+// Bluetooth keyboard object
 BleKeyboard bleKeyboard("T4-S3 Keyboard", "LilyGO", 100);
+
+void startBluetoothWithName(const char *deviceName)
+{
+    // End previous connection if exists
+    if (bleKeyboard.isConnected())
+    {
+        bleKeyboard.end();
+        delay(500);
+    }
+
+    // Update device name and restart
+    bleKeyboard.setName(deviceName);
+    bleKeyboard.begin();
+
+    // Configure "Just Works" pairing
+    esp_ble_auth_req_t auth_req = ESP_LE_AUTH_BOND;
+    esp_ble_io_cap_t iocap = ESP_IO_CAP_NONE;
+    uint8_t key_size = 16;
+    uint8_t init_key = ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK;
+    uint8_t rsp_key = ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK;
+    uint8_t auth_option = ESP_BLE_ONLY_ACCEPT_SPECIFIED_AUTH_DISABLE;
+
+    esp_ble_gap_set_security_param(ESP_BLE_SM_AUTHEN_REQ_MODE, &auth_req, sizeof(uint8_t));
+    esp_ble_gap_set_security_param(ESP_BLE_SM_IOCAP_MODE, &iocap, sizeof(uint8_t));
+    esp_ble_gap_set_security_param(ESP_BLE_SM_MAX_KEY_SIZE, &key_size, sizeof(uint8_t));
+    esp_ble_gap_set_security_param(ESP_BLE_SM_ONLY_ACCEPT_SPECIFIED_SEC_AUTH, &auth_option, sizeof(uint8_t));
+    esp_ble_gap_set_security_param(ESP_BLE_SM_SET_INIT_KEY, &init_key, sizeof(uint8_t));
+    esp_ble_gap_set_security_param(ESP_BLE_SM_SET_RSP_KEY, &rsp_key, sizeof(uint8_t));
+
+    delay(500);
+    Serial.print("Bluetooth started as: ");
+    Serial.println(deviceName);
+}
 
 lv_obj_t *tabview;
 lv_obj_t *page1;
@@ -18,6 +52,9 @@ lv_obj_t *btn4;
 
 lv_obj_t *status_screen = NULL;
 lv_obj_t *status_label = NULL;
+
+lv_obj_t *media_page = NULL;
+lv_obj_t *connection_banner = NULL;
 
 // Show status overlay (Connecting...)
 void showStatusScreen(const char *message)
@@ -55,33 +92,125 @@ void showConnectedPage()
     lv_tabview_set_act(tabview, 2, LV_ANIM_ON); // Switch to page 3 (index 2)
 }
 
-// Browser button callback
-void browser_btn_event_cb(lv_event_t *e)
+// Update connection status banner
+void updateConnectionBanner(bool connected)
 {
-    Serial.println("Opening browser...");
+    if (connection_banner == NULL)
+        return;
 
-    if (bleKeyboard.isConnected())
+    if (connected)
     {
-        // Send GUI+R to open Run dialog (Windows)
-        // Or Command+Space on Mac
-        bleKeyboard.press(KEY_LEFT_GUI);
-        bleKeyboard.press('r');
-        delay(100);
-        bleKeyboard.releaseAll();
-        delay(200);
-
-        // Type browser command
-        bleKeyboard.print("chrome"); // or "firefox", "msedge"
-        delay(100);
-        bleKeyboard.press(KEY_RETURN);
-        bleKeyboard.releaseAll();
-
-        Serial.println("Browser command sent!");
+        lv_label_set_text(connection_banner, "CONNECTED");
+        lv_obj_set_style_bg_color(connection_banner, lv_color_make(0, 255, 0), 0);
+        lv_obj_set_style_bg_opa(connection_banner, LV_OPA_30, 0);
+        lv_obj_set_style_border_color(connection_banner, lv_color_make(0, 255, 0), 0);
+        lv_obj_set_style_text_color(connection_banner, lv_color_make(0, 255, 0), 0);
     }
     else
     {
-        Serial.println("ERROR: Bluetooth not connected!");
+        lv_label_set_text(connection_banner, "DISCONNECTED");
+        lv_obj_set_style_bg_color(connection_banner, lv_color_make(255, 0, 0), 0);
+        lv_obj_set_style_bg_opa(connection_banner, LV_OPA_30, 0);
+        lv_obj_set_style_border_color(connection_banner, lv_color_make(255, 0, 0), 0);
+        lv_obj_set_style_text_color(connection_banner, lv_color_make(255, 0, 0), 0);
     }
+}
+
+// Media control button callback
+void media_btn_event_cb(lv_event_t *e)
+{
+    const char *action = (const char *)lv_event_get_user_data(e);
+    Serial.print("Media control: ");
+    Serial.println(action);
+
+    if (!bleKeyboard.isConnected())
+    {
+        Serial.println("ERROR: Bluetooth not connected!");
+        return;
+    }
+
+    // Send media keys based on action
+    if (strcmp(action, "previous") == 0)
+    {
+        bleKeyboard.write(KEY_MEDIA_PREVIOUS_TRACK);
+    }
+    else if (strcmp(action, "play_pause") == 0)
+    {
+        bleKeyboard.write(KEY_MEDIA_PLAY_PAUSE);
+    }
+    else if (strcmp(action, "next") == 0)
+    {
+        bleKeyboard.write(KEY_MEDIA_NEXT_TRACK);
+    }
+    else if (strcmp(action, "volume_up") == 0)
+    {
+        bleKeyboard.write(KEY_MEDIA_VOLUME_UP);
+    }
+    else if (strcmp(action, "volume_down") == 0)
+    {
+        bleKeyboard.write(KEY_MEDIA_VOLUME_DOWN);
+    }
+    else if (strcmp(action, "mute") == 0)
+    {
+        bleKeyboard.write(KEY_MEDIA_MUTE);
+    }
+}
+
+lv_obj_t *create_media_button(lv_obj_t *parent, const char *icon, const char *label, const char *action,
+                              lv_color_t color, uint8_t col, uint8_t row)
+{
+    lv_obj_t *btn = lv_btn_create(parent);
+    lv_obj_set_grid_cell(btn, LV_GRID_ALIGN_STRETCH, col, 1, LV_GRID_ALIGN_STRETCH, row, 1);
+
+    // Glass effect styling
+    lv_obj_set_style_bg_color(btn, lv_color_make(40, 40, 60), 0);
+    lv_obj_set_style_bg_opa(btn, LV_OPA_50, 0);
+    lv_obj_set_style_border_color(btn, lv_color_make(80, 80, 120), 0);
+    lv_obj_set_style_border_width(btn, 1, 0);
+    lv_obj_set_style_border_opa(btn, LV_OPA_60, 0);
+    lv_obj_set_style_radius(btn, 8, 0);
+
+    // Hover effect (pressed state)
+    lv_obj_set_style_bg_opa(btn, LV_OPA_70, LV_STATE_PRESSED);
+
+    // Container for icon and label (flex column)
+    lv_obj_set_flex_flow(btn, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(btn, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_style_pad_all(btn, 8, 0);
+
+    // Icon (using Unicode symbols)
+    lv_obj_t *icon_label = lv_label_create(btn);
+    lv_label_set_text(icon_label, icon);
+    lv_obj_set_style_text_font(icon_label, &lv_font_montserrat_48, 0);
+    lv_obj_set_style_text_color(icon_label, color, 0);
+
+    // Text label - UPPERCASE and bold style
+    lv_obj_t *text_label = lv_label_create(btn);
+    lv_label_set_text(text_label, label);
+    lv_obj_set_style_text_font(text_label, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_color(text_label, lv_color_white(), 0);
+    lv_label_set_long_mode(text_label, LV_LABEL_LONG_WRAP);
+    lv_obj_set_style_text_align(text_label, LV_TEXT_ALIGN_CENTER, 0);
+
+    // Add callback
+    lv_obj_add_event_cb(btn, media_btn_event_cb, LV_EVENT_CLICKED, (void *)action);
+
+    return btn;
+}
+
+// Browser button callback
+void browser_btn_event_cb(lv_event_t *e)
+{
+    if (!bleKeyboard.isConnected())
+    {
+        Serial.println("BLE not connected");
+        return;
+    }
+
+    bleKeyboard.print("https://google.com");
+    bleKeyboard.write(KEY_RETURN);
+
+    Serial.println("URL sent");
 }
 
 // Device connection button callback
@@ -90,24 +219,34 @@ void btn_event_cb(lv_event_t *e)
     const char *message = (const char *)lv_event_get_user_data(e);
     Serial.println(message);
 
-    // Check which button was pressed
     lv_obj_t *btn = lv_event_get_target(e);
 
-    if (btn == btn1 || btn == btn2)
+    if (btn == btn1)
     {
-        // Check Bluetooth connection status
+        showStatusScreen("Connecting...");
+        startBluetoothWithName("T4-S3 Keyboard 1");
+
+        // Wait briefly then check connection
+        delay(2000);
         if (bleKeyboard.isConnected())
         {
-            Serial.println("Already connected!");
             showStatusScreen("Connected!");
             delay(1000);
             showConnectedPage();
         }
-        else
+    }
+    else if (btn == btn2)
+    {
+        showStatusScreen("Connecting...");
+        startBluetoothWithName("T4-S3 Keyboard 2");
+
+        // Wait briefly then check connection
+        delay(2000);
+        if (bleKeyboard.isConnected())
         {
-            // Still waiting for connection
-            showStatusScreen("Connecting...");
-            Serial.println("Waiting for Bluetooth connection...");
+            showStatusScreen("Connected!");
+            delay(1000);
+            showConnectedPage();
         }
     }
 }
@@ -120,12 +259,13 @@ void setupPage1(lv_obj_t *parent)
 
     lv_obj_t *grid = lv_obj_create(parent);
     lv_obj_set_size(grid, LV_PCT(100), LV_PCT(100));
-    lv_obj_center(grid);
     lv_obj_set_layout(grid, LV_LAYOUT_GRID);
     lv_obj_set_grid_dsc_array(grid, col_dsc, row_dsc);
     lv_obj_set_style_pad_column(grid, 10, 0);
     lv_obj_set_style_pad_row(grid, 10, 0);
     lv_obj_set_style_pad_all(grid, 10, 0);
+    lv_obj_set_style_bg_opa(grid, LV_OPA_TRANSP, 0);
+    lv_obj_set_style_border_width(grid, 0, 0);
 
     // Device 1
     btn1 = lv_btn_create(grid);
@@ -176,7 +316,9 @@ void setupPage2(lv_obj_t *parent)
 {
     lv_obj_t *container = lv_obj_create(parent);
     lv_obj_set_size(container, LV_PCT(100), LV_PCT(100));
-    lv_obj_set_style_pad_all(container, 20, 0);
+    lv_obj_set_style_pad_all(container, 10, 0);
+    lv_obj_set_style_bg_opa(container, LV_OPA_TRANSP, 0);
+    lv_obj_set_style_border_width(container, 0, 0);
     lv_obj_set_flex_flow(container, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_flex_align(container, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 
@@ -207,31 +349,85 @@ void setupPage2(lv_obj_t *parent)
     lv_obj_set_style_text_font(hint, &lv_font_montserrat_14, 0);
 }
 
-void setupPage3(lv_obj_t *parent)
+void setupMediaControlsPage(lv_obj_t *parent)
 {
-    // Connected page with browser button
-    static lv_coord_t col_dsc[] = {LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
+    // Create glass container
+    lv_obj_t *glass = lv_obj_create(parent);
+    lv_obj_set_size(glass, LV_PCT(100), LV_PCT(100));
+
+    // Glass effect background
+    lv_obj_set_style_bg_color(glass, lv_color_make(20, 20, 40), 0);
+    lv_obj_set_style_bg_opa(glass, LV_OPA_30, 0);
+    lv_obj_set_style_border_color(glass, lv_color_make(80, 80, 120), 0);
+    lv_obj_set_style_border_width(glass, 2, 0);
+    lv_obj_set_style_border_opa(glass, LV_OPA_50, 0);
+    lv_obj_set_style_radius(glass, 16, 0);
+    lv_obj_set_style_shadow_width(glass, 30, 0);
+    lv_obj_set_style_shadow_color(glass, lv_color_black(), 0);
+    lv_obj_set_style_shadow_opa(glass, LV_OPA_40, 0);
+    lv_obj_set_style_pad_all(glass, 10, 0);
+
+    // Create connection status banner at top
+    connection_banner = lv_label_create(glass);
+    lv_label_set_text(connection_banner, "DISCONNECTED");
+    lv_obj_set_size(connection_banner, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+    lv_obj_align(connection_banner, LV_ALIGN_TOP_MID, 0, 10);
+
+    // Banner styling
+    lv_obj_set_style_bg_color(connection_banner, lv_color_make(255, 0, 0), 0);
+    lv_obj_set_style_bg_opa(connection_banner, LV_OPA_30, 0);
+    lv_obj_set_style_border_color(connection_banner, lv_color_make(255, 0, 0), 0);
+    lv_obj_set_style_border_width(connection_banner, 1, 0);
+    lv_obj_set_style_border_opa(connection_banner, LV_OPA_70, 0);
+    lv_obj_set_style_radius(connection_banner, 4, 0);
+    lv_obj_set_style_pad_hor(connection_banner, 8, 0);
+    lv_obj_set_style_pad_ver(connection_banner, 4, 0);
+    lv_obj_set_style_text_color(connection_banner, lv_color_make(255, 0, 0), 0);
+    lv_obj_set_style_text_font(connection_banner, &lv_font_montserrat_12, 0);
+
+    // Create grid container (below banner)
+    lv_obj_t *grid = lv_obj_create(glass);
+    lv_obj_set_size(grid, LV_PCT(100), LV_PCT(100));
+    lv_obj_align(grid, LV_ALIGN_BOTTOM_MID, 0, 0);
+    lv_obj_set_style_bg_opa(grid, LV_OPA_TRANSP, 0);
+    lv_obj_set_style_border_width(grid, 0, 0);
+    lv_obj_set_style_pad_top(grid, 30, 0); // Space for banner
+
+    // Setup 3x2 grid layout
+    static lv_coord_t col_dsc[] = {LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
     static lv_coord_t row_dsc[] = {LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
 
-    lv_obj_t *grid = lv_obj_create(parent);
-    lv_obj_set_size(grid, LV_PCT(100), LV_PCT(100));
-    lv_obj_center(grid);
     lv_obj_set_layout(grid, LV_LAYOUT_GRID);
     lv_obj_set_grid_dsc_array(grid, col_dsc, row_dsc);
+    lv_obj_set_style_pad_all(grid, 5, 0);
     lv_obj_set_style_pad_column(grid, 10, 0);
     lv_obj_set_style_pad_row(grid, 10, 0);
-    lv_obj_set_style_pad_all(grid, 10, 0);
 
-    // Browser button (top-left)
-    lv_obj_t *browser_btn = lv_btn_create(grid);
-    lv_obj_set_grid_cell(browser_btn, LV_GRID_ALIGN_STRETCH, 0, 1, LV_GRID_ALIGN_STRETCH, 0, 1);
-    lv_obj_add_event_cb(browser_btn, browser_btn_event_cb, LV_EVENT_CLICKED, NULL);
-    lv_obj_set_style_bg_color(browser_btn, lv_color_make(100, 200, 255), 0);
+    // Create buttons (3 columns x 2 rows)
+    // Row 0
+    create_media_button(grid, LV_SYMBOL_PREV, "PREVIOUS", "previous",
+                        lv_color_make(100, 150, 255), 0, 0);
 
-    lv_obj_t *browser_label = lv_label_create(browser_btn);
-    lv_label_set_text(browser_label, "Browser");
-    lv_obj_set_style_text_font(browser_label, &lv_font_montserrat_28, 0);
-    lv_obj_center(browser_label);
+    create_media_button(grid, LV_SYMBOL_PLAY, "PLAY/PAUSE", "play_pause",
+                        lv_color_make(100, 255, 150), 1, 0);
+
+    create_media_button(grid, LV_SYMBOL_NEXT, "NEXT", "next",
+                        lv_color_make(100, 150, 255), 2, 0);
+
+    // Row 1
+    create_media_button(grid, LV_SYMBOL_VOLUME_MAX, "VOLUME UP", "volume_up",
+                        lv_color_make(255, 200, 100), 0, 1);
+
+    create_media_button(grid, LV_SYMBOL_VOLUME_MID, "VOLUME DOWN", "volume_down",
+                        lv_color_make(255, 200, 100), 1, 1);
+
+    create_media_button(grid, LV_SYMBOL_MUTE, "MUTE", "mute",
+                        lv_color_make(255, 100, 100), 2, 1);
+
+    // Set initial connection status
+    updateConnectionBanner(bleKeyboard.isConnected());
+
+    Serial.println("Media controls page created with status banner!");
 }
 
 void setupUI()
@@ -244,7 +440,7 @@ void setupUI()
 
     setupPage1(page1);
     setupPage2(page2);
-    setupPage3(page3);
+    setupMediaControlsPage(page3);
 
     Serial.println("UI ready with 3 pages!");
 }

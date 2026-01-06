@@ -1,8 +1,9 @@
 #include <Arduino.h>
 #include <lvgl.h>
-#include "LilyGo_AMOLED.h"
-#include "LV_Helper.h"
-#include "ui_setup.h"
+#include "hardware/LilyGo_AMOLED.h"
+#include "ui/LV_Helper.h"
+#include "ui/ui_setup.h"
+#include "ui/pages/info_page.h"
 #include <BleKeyboard.h>
 #include <esp_wifi.h>
 #include <esp_bt.h>

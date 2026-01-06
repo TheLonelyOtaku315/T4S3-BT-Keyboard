@@ -101,12 +101,24 @@ void showMediaPage()
     if (page3 == NULL)
     {
         page3 = lv_tabview_add_tab(tabview, "Connected");
+
+        // Remove padding and borders from page3
+        lv_obj_set_style_pad_all(page3, 0, 0);
+        lv_obj_set_style_border_width(page3, 0, 0);
+        lv_obj_set_style_bg_color(page3, lv_color_black(), 0);
+
         setupMediaControlsPage(page3);
         Serial.println("Media controls page created on connection!");
     }
     if (page4 == NULL)
     {
         page4 = lv_tabview_add_tab(tabview, "Utilities");
+
+        // Remove padding and borders from page4
+        lv_obj_set_style_pad_all(page4, 0, 0);
+        lv_obj_set_style_border_width(page4, 0, 0);
+        lv_obj_set_style_bg_color(page4, lv_color_black(), 0);
+
         Serial.println("Utilities page created on connection!");
     }
 
@@ -183,16 +195,16 @@ lv_obj_t *create_media_button(lv_obj_t *parent, const char *icon, const char *la
     lv_obj_t *btn = lv_btn_create(parent);
     lv_obj_set_grid_cell(btn, LV_GRID_ALIGN_STRETCH, col, 1, LV_GRID_ALIGN_STRETCH, row, 1);
 
-    // Glass effect styling
-    lv_obj_set_style_bg_color(btn, lv_color_make(40, 40, 60), 0);
-    lv_obj_set_style_bg_opa(btn, LV_OPA_50, 0);
-    lv_obj_set_style_border_color(btn, lv_color_make(80, 80, 120), 0);
+    // Minimalist button styling
+    lv_obj_set_style_bg_color(btn, lv_color_make(40, 40, 40), 0);
+    lv_obj_set_style_bg_opa(btn, LV_OPA_40, 0);
+    lv_obj_set_style_border_color(btn, lv_color_make(120, 120, 120), 0);
     lv_obj_set_style_border_width(btn, 1, 0);
-    lv_obj_set_style_border_opa(btn, LV_OPA_60, 0);
+    lv_obj_set_style_border_opa(btn, LV_OPA_40, 0);
     lv_obj_set_style_radius(btn, 8, 0);
 
     // Hover effect (pressed state)
-    lv_obj_set_style_bg_opa(btn, LV_OPA_70, LV_STATE_PRESSED);
+    lv_obj_set_style_bg_opa(btn, LV_OPA_60, LV_STATE_PRESSED);
 
     // Container for icon and label (flex column)
     lv_obj_set_flex_flow(btn, LV_FLEX_FLOW_COLUMN);
@@ -203,7 +215,7 @@ lv_obj_t *create_media_button(lv_obj_t *parent, const char *icon, const char *la
     lv_obj_t *icon_label = lv_label_create(btn);
     lv_label_set_text(icon_label, icon);
     lv_obj_set_style_text_font(icon_label, &lv_font_montserrat_48, 0);
-    lv_obj_set_style_text_color(icon_label, color, 0);
+    lv_obj_set_style_text_color(icon_label, lv_color_make(200, 200, 200), 0);
 
     // Text label - UPPERCASE and bold style
     lv_obj_t *text_label = lv_label_create(btn);
@@ -304,17 +316,33 @@ void buttonEventCallback(lv_event_t *e)
 
 void setupConnectionPage(lv_obj_t *parent)
 {
+    // Create glass container
+    lv_obj_t *glass = lv_obj_create(parent);
+    lv_obj_set_size(glass, LV_PCT(100), LV_PCT(100));
+
+    // Glass effect background
+    lv_obj_set_style_bg_color(glass, lv_color_make(20, 20, 40), 0);
+    lv_obj_set_style_bg_opa(glass, LV_OPA_30, 0);
+    lv_obj_set_style_border_color(glass, lv_color_make(80, 80, 120), 0);
+    lv_obj_set_style_border_width(glass, 2, 0);
+    lv_obj_set_style_border_opa(glass, LV_OPA_50, 0);
+    lv_obj_set_style_radius(glass, 16, 0);
+    lv_obj_set_style_shadow_width(glass, 30, 0);
+    lv_obj_set_style_shadow_color(glass, lv_color_black(), 0);
+    lv_obj_set_style_shadow_opa(glass, LV_OPA_40, 0);
+    lv_obj_set_style_pad_all(glass, 10, 0);
+
     // 2x2 grid
     static lv_coord_t col_dsc[] = {LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
     static lv_coord_t row_dsc[] = {LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
 
-    lv_obj_t *grid = lv_obj_create(parent);
+    lv_obj_t *grid = lv_obj_create(glass);
     lv_obj_set_size(grid, LV_PCT(100), LV_PCT(100));
     lv_obj_set_layout(grid, LV_LAYOUT_GRID);
     lv_obj_set_grid_dsc_array(grid, col_dsc, row_dsc);
     lv_obj_set_style_pad_column(grid, 10, 0);
     lv_obj_set_style_pad_row(grid, 10, 0);
-    lv_obj_set_style_pad_all(grid, 10, 0);
+    lv_obj_set_style_pad_all(grid, 5, 0);
     lv_obj_set_style_bg_opa(grid, LV_OPA_TRANSP, 0);
     lv_obj_set_style_border_width(grid, 0, 0);
 
@@ -322,50 +350,154 @@ void setupConnectionPage(lv_obj_t *parent)
     btn1 = lv_btn_create(grid);
     lv_obj_set_grid_cell(btn1, LV_GRID_ALIGN_STRETCH, 0, 1, LV_GRID_ALIGN_STRETCH, 0, 1);
     lv_obj_add_event_cb(btn1, buttonEventCallback, LV_EVENT_CLICKED, (void *)"Connecting to Device 1");
-    lv_obj_set_style_bg_color(btn1, lv_color_make(0, 130, 252), 0);
 
+    // Minimalist button styling
+    lv_obj_set_style_bg_color(btn1, lv_color_make(40, 40, 40), 0);
+    lv_obj_set_style_bg_opa(btn1, LV_OPA_40, 0);
+    lv_obj_set_style_border_color(btn1, lv_color_make(120, 120, 120), 0);
+    lv_obj_set_style_border_width(btn1, 1, 0);
+    lv_obj_set_style_border_opa(btn1, LV_OPA_40, 0);
+    lv_obj_set_style_radius(btn1, 8, 0);
+    lv_obj_set_style_bg_opa(btn1, LV_OPA_60, LV_STATE_PRESSED);
+
+    // Container for icon and label (flex column)
+    lv_obj_set_flex_flow(btn1, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(btn1, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_style_pad_all(btn1, 8, 0);
+
+    // Icon
+    lv_obj_t *icon1 = lv_label_create(btn1);
+    lv_label_set_text(icon1, LV_SYMBOL_BLUETOOTH);
+    lv_obj_set_style_text_font(icon1, &lv_font_montserrat_48, 0);
+    lv_obj_set_style_text_color(icon1, lv_color_make(200, 200, 200), 0);
+
+    // Text label
     lv_obj_t *label1 = lv_label_create(btn1);
-    lv_label_set_text(label1, "Device 1");
-    lv_obj_set_style_text_font(label1, &lv_font_montserrat_24, 0);
-    lv_obj_center(label1);
+    lv_label_set_text(label1, "DEVICE 1");
+    lv_obj_set_style_text_font(label1, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_color(label1, lv_color_white(), 0);
+    lv_label_set_long_mode(label1, LV_LABEL_LONG_WRAP);
+    lv_obj_set_style_text_align(label1, LV_TEXT_ALIGN_CENTER, 0);
 
     // Device 2
     btn2 = lv_btn_create(grid);
     lv_obj_set_grid_cell(btn2, LV_GRID_ALIGN_STRETCH, 1, 1, LV_GRID_ALIGN_STRETCH, 0, 1);
     lv_obj_add_event_cb(btn2, buttonEventCallback, LV_EVENT_CLICKED, (void *)"Connecting to Device 2");
-    lv_obj_set_style_bg_color(btn2, lv_color_make(255, 130, 0), 0);
 
+    // Minimalist button styling
+    lv_obj_set_style_bg_color(btn2, lv_color_make(40, 40, 40), 0);
+    lv_obj_set_style_bg_opa(btn2, LV_OPA_40, 0);
+    lv_obj_set_style_border_color(btn2, lv_color_make(120, 120, 120), 0);
+    lv_obj_set_style_border_width(btn2, 1, 0);
+    lv_obj_set_style_border_opa(btn2, LV_OPA_40, 0);
+    lv_obj_set_style_radius(btn2, 8, 0);
+    lv_obj_set_style_bg_opa(btn2, LV_OPA_60, LV_STATE_PRESSED);
+
+    // Container for icon and label (flex column)
+    lv_obj_set_flex_flow(btn2, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(btn2, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_style_pad_all(btn2, 8, 0);
+
+    // Icon
+    lv_obj_t *icon2 = lv_label_create(btn2);
+    lv_label_set_text(icon2, LV_SYMBOL_BLUETOOTH);
+    lv_obj_set_style_text_font(icon2, &lv_font_montserrat_48, 0);
+    lv_obj_set_style_text_color(icon2, lv_color_make(200, 200, 200), 0);
+
+    // Text label
     lv_obj_t *label2 = lv_label_create(btn2);
-    lv_label_set_text(label2, "Device 2");
-    lv_obj_set_style_text_font(label2, &lv_font_montserrat_24, 0);
-    lv_obj_center(label2);
+    lv_label_set_text(label2, "DEVICE 2");
+    lv_obj_set_style_text_font(label2, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_color(label2, lv_color_white(), 0);
+    lv_label_set_long_mode(label2, LV_LABEL_LONG_WRAP);
+    lv_obj_set_style_text_align(label2, LV_TEXT_ALIGN_CENTER, 0);
 
     // Device 3
     btn3 = lv_btn_create(grid);
     lv_obj_set_grid_cell(btn3, LV_GRID_ALIGN_STRETCH, 0, 1, LV_GRID_ALIGN_STRETCH, 1, 1);
     lv_obj_add_event_cb(btn3, buttonEventCallback, LV_EVENT_CLICKED, (void *)"Device 3 (Not implemented)");
-    lv_obj_set_style_bg_color(btn3, lv_color_make(0, 200, 100), 0);
 
+    // Minimalist button styling
+    lv_obj_set_style_bg_color(btn3, lv_color_make(40, 40, 40), 0);
+    lv_obj_set_style_bg_opa(btn3, LV_OPA_40, 0);
+    lv_obj_set_style_border_color(btn3, lv_color_make(120, 120, 120), 0);
+    lv_obj_set_style_border_width(btn3, 1, 0);
+    lv_obj_set_style_border_opa(btn3, LV_OPA_40, 0);
+    lv_obj_set_style_radius(btn3, 8, 0);
+    lv_obj_set_style_bg_opa(btn3, LV_OPA_60, LV_STATE_PRESSED);
+
+    // Container for icon and label (flex column)
+    lv_obj_set_flex_flow(btn3, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(btn3, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_style_pad_all(btn3, 8, 0);
+
+    // Icon
+    lv_obj_t *icon3 = lv_label_create(btn3);
+    lv_label_set_text(icon3, LV_SYMBOL_BLUETOOTH);
+    lv_obj_set_style_text_font(icon3, &lv_font_montserrat_48, 0);
+    lv_obj_set_style_text_color(icon3, lv_color_make(200, 200, 200), 0);
+
+    // Text label
     lv_obj_t *label3 = lv_label_create(btn3);
-    lv_label_set_text(label3, "Device 3");
-    lv_obj_set_style_text_font(label3, &lv_font_montserrat_24, 0);
-    lv_obj_center(label3);
+    lv_label_set_text(label3, "DEVICE 3");
+    lv_obj_set_style_text_font(label3, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_color(label3, lv_color_white(), 0);
+    lv_label_set_long_mode(label3, LV_LABEL_LONG_WRAP);
+    lv_obj_set_style_text_align(label3, LV_TEXT_ALIGN_CENTER, 0);
 
     // Settings
     btn4 = lv_btn_create(grid);
     lv_obj_set_grid_cell(btn4, LV_GRID_ALIGN_STRETCH, 1, 1, LV_GRID_ALIGN_STRETCH, 1, 1);
     lv_obj_add_event_cb(btn4, buttonEventCallback, LV_EVENT_CLICKED, (void *)"Settings");
-    lv_obj_set_style_bg_color(btn4, lv_color_make(255, 0, 200), 0);
 
+    // Minimalist button styling
+    lv_obj_set_style_bg_color(btn4, lv_color_make(40, 40, 40), 0);
+    lv_obj_set_style_bg_opa(btn4, LV_OPA_40, 0);
+    lv_obj_set_style_border_color(btn4, lv_color_make(120, 120, 120), 0);
+    lv_obj_set_style_border_width(btn4, 1, 0);
+    lv_obj_set_style_border_opa(btn4, LV_OPA_40, 0);
+    lv_obj_set_style_radius(btn4, 8, 0);
+    lv_obj_set_style_bg_opa(btn4, LV_OPA_60, LV_STATE_PRESSED);
+
+    // Container for icon and label (flex column)
+    lv_obj_set_flex_flow(btn4, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(btn4, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_style_pad_all(btn4, 8, 0);
+
+    // Icon
+    lv_obj_t *icon4 = lv_label_create(btn4);
+    lv_label_set_text(icon4, LV_SYMBOL_SETTINGS);
+    lv_obj_set_style_text_font(icon4, &lv_font_montserrat_48, 0);
+    lv_obj_set_style_text_color(icon4, lv_color_make(200, 200, 200), 0);
+
+    // Text label
     lv_obj_t *label4 = lv_label_create(btn4);
-    lv_label_set_text(label4, "Settings");
-    lv_obj_set_style_text_font(label4, &lv_font_montserrat_24, 0);
-    lv_obj_center(label4);
+    lv_label_set_text(label4, "SETTINGS");
+    lv_obj_set_style_text_font(label4, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_color(label4, lv_color_white(), 0);
+    lv_label_set_long_mode(label4, LV_LABEL_LONG_WRAP);
+    lv_obj_set_style_text_align(label4, LV_TEXT_ALIGN_CENTER, 0);
 }
 
 void setupInfoPage(lv_obj_t *parent)
 {
-    lv_obj_t *container = lv_obj_create(parent);
+    // Create glass container
+    lv_obj_t *glass = lv_obj_create(parent);
+    lv_obj_set_size(glass, LV_PCT(100), LV_PCT(100));
+
+    // Glass effect background
+    lv_obj_set_style_bg_color(glass, lv_color_make(20, 20, 40), 0);
+    lv_obj_set_style_bg_opa(glass, LV_OPA_30, 0);
+    lv_obj_set_style_border_color(glass, lv_color_make(80, 80, 120), 0);
+    lv_obj_set_style_border_width(glass, 2, 0);
+    lv_obj_set_style_border_opa(glass, LV_OPA_50, 0);
+    lv_obj_set_style_radius(glass, 16, 0);
+    lv_obj_set_style_shadow_width(glass, 30, 0);
+    lv_obj_set_style_shadow_color(glass, lv_color_black(), 0);
+    lv_obj_set_style_shadow_opa(glass, LV_OPA_40, 0);
+    lv_obj_set_style_pad_all(glass, 10, 0);
+
+    lv_obj_t *container = lv_obj_create(glass);
     lv_obj_set_size(container, LV_PCT(100), LV_PCT(100));
     lv_obj_set_style_pad_all(container, 10, 0);
     lv_obj_set_style_bg_opa(container, LV_OPA_TRANSP, 0);
@@ -376,7 +508,7 @@ void setupInfoPage(lv_obj_t *parent)
     lv_obj_t *title = lv_label_create(container);
     lv_label_set_text(title, "Board Information");
     lv_obj_set_style_text_font(title, &lv_font_montserrat_28, 0);
-    lv_obj_set_style_text_color(title, lv_color_make(0, 200, 255), 0);
+    lv_obj_set_style_text_color(title, lv_color_make(220, 220, 220), 0);
 
     lv_obj_t *model = lv_label_create(container);
     lv_label_set_text(model, "Model: T4-S3 AMOLED");
@@ -399,7 +531,7 @@ void setupInfoPage(lv_obj_t *parent)
     battery_label = lv_label_create(container);
     lv_label_set_text(battery_label, "Battery: Checking...");
     lv_obj_set_style_text_font(battery_label, &lv_font_montserrat_20, 0);
-    lv_obj_set_style_text_color(battery_label, lv_color_make(100, 255, 150), 0);
+    lv_obj_set_style_text_color(battery_label, lv_color_make(180, 180, 180), 0);
 
     lv_obj_t *hint = lv_label_create(container);
     lv_label_set_text(hint, "\n< Swipe to return");
@@ -412,16 +544,16 @@ void setupMediaControlsPage(lv_obj_t *parent)
     lv_obj_t *glass = lv_obj_create(parent);
     lv_obj_set_size(glass, LV_PCT(100), LV_PCT(100));
 
-    // Glass effect background
-    lv_obj_set_style_bg_color(glass, lv_color_make(20, 20, 40), 0);
-    lv_obj_set_style_bg_opa(glass, LV_OPA_30, 0);
-    lv_obj_set_style_border_color(glass, lv_color_make(80, 80, 120), 0);
-    lv_obj_set_style_border_width(glass, 2, 0);
-    lv_obj_set_style_border_opa(glass, LV_OPA_50, 0);
-    lv_obj_set_style_radius(glass, 16, 0);
-    lv_obj_set_style_shadow_width(glass, 30, 0);
+    // Minimalist glass effect
+    lv_obj_set_style_bg_color(glass, lv_color_make(30, 30, 30), 0);
+    lv_obj_set_style_bg_opa(glass, LV_OPA_20, 0);
+    lv_obj_set_style_border_color(glass, lv_color_make(100, 100, 100), 0);
+    lv_obj_set_style_border_width(glass, 1, 0);
+    lv_obj_set_style_border_opa(glass, LV_OPA_30, 0);
+    lv_obj_set_style_radius(glass, 12, 0);
+    lv_obj_set_style_shadow_width(glass, 20, 0);
     lv_obj_set_style_shadow_color(glass, lv_color_black(), 0);
-    lv_obj_set_style_shadow_opa(glass, LV_OPA_40, 0);
+    lv_obj_set_style_shadow_opa(glass, LV_OPA_20, 0);
     lv_obj_set_style_pad_all(glass, 10, 0);
 
     // Create grid container (below banner)
@@ -476,16 +608,16 @@ lv_obj_t *create_utility_button(lv_obj_t *parent, const char *icon, const char *
     lv_obj_t *btn = lv_btn_create(parent);
     lv_obj_set_grid_cell(btn, LV_GRID_ALIGN_STRETCH, col, 1, LV_GRID_ALIGN_STRETCH, row, 1);
 
-    // Glass effect styling
-    lv_obj_set_style_bg_color(btn, lv_color_make(40, 40, 60), 0);
-    lv_obj_set_style_bg_opa(btn, LV_OPA_50, 0);
-    lv_obj_set_style_border_color(btn, lv_color_make(80, 80, 120), 0);
+    // Minimalist button styling
+    lv_obj_set_style_bg_color(btn, lv_color_make(40, 40, 40), 0);
+    lv_obj_set_style_bg_opa(btn, LV_OPA_40, 0);
+    lv_obj_set_style_border_color(btn, lv_color_make(120, 120, 120), 0);
     lv_obj_set_style_border_width(btn, 1, 0);
-    lv_obj_set_style_border_opa(btn, LV_OPA_60, 0);
+    lv_obj_set_style_border_opa(btn, LV_OPA_40, 0);
     lv_obj_set_style_radius(btn, 8, 0);
 
     // Hover effect (pressed state)
-    lv_obj_set_style_bg_opa(btn, LV_OPA_70, LV_STATE_PRESSED);
+    lv_obj_set_style_bg_opa(btn, LV_OPA_60, LV_STATE_PRESSED);
 
     // Container for icon and label (flex column)
     lv_obj_set_flex_flow(btn, LV_FLEX_FLOW_COLUMN);
@@ -496,7 +628,7 @@ lv_obj_t *create_utility_button(lv_obj_t *parent, const char *icon, const char *
     lv_obj_t *icon_label = lv_label_create(btn);
     lv_label_set_text(icon_label, icon);
     lv_obj_set_style_text_font(icon_label, &lv_font_montserrat_48, 0);
-    lv_obj_set_style_text_color(icon_label, color, 0);
+    lv_obj_set_style_text_color(icon_label, lv_color_make(200, 200, 200), 0);
 
     // Text label - UPPERCASE and bold style
     lv_obj_t *text_label = lv_label_create(btn);
@@ -518,27 +650,27 @@ void setupUtilityPage(lv_obj_t *parent)
     lv_obj_t *glass = lv_obj_create(parent);
     lv_obj_set_size(glass, LV_PCT(100), LV_PCT(100));
 
-    // Glass effect background
-    lv_obj_set_style_bg_color(glass, lv_color_make(20, 20, 40), 0);
-    lv_obj_set_style_bg_opa(glass, LV_OPA_30, 0);
-    lv_obj_set_style_border_color(glass, lv_color_make(80, 80, 120), 0);
-    lv_obj_set_style_border_width(glass, 2, 0);
-    lv_obj_set_style_border_opa(glass, LV_OPA_50, 0);
-    lv_obj_set_style_radius(glass, 16, 0);
-    lv_obj_set_style_shadow_width(glass, 30, 0);
+    // Minimalist glass effect
+    lv_obj_set_style_bg_color(glass, lv_color_make(30, 30, 30), 0);
+    lv_obj_set_style_bg_opa(glass, LV_OPA_20, 0);
+    lv_obj_set_style_border_color(glass, lv_color_make(100, 100, 100), 0);
+    lv_obj_set_style_border_width(glass, 1, 0);
+    lv_obj_set_style_border_opa(glass, LV_OPA_30, 0);
+    lv_obj_set_style_radius(glass, 12, 0);
+    lv_obj_set_style_shadow_width(glass, 20, 0);
     lv_obj_set_style_shadow_color(glass, lv_color_black(), 0);
-    lv_obj_set_style_shadow_opa(glass, LV_OPA_40, 0);
+    lv_obj_set_style_shadow_opa(glass, LV_OPA_20, 0);
     lv_obj_set_style_pad_all(glass, 10, 0);
 
     // Info panel at top
     lv_obj_t *info_panel = lv_obj_create(glass);
     lv_obj_set_size(info_panel, LV_PCT(100), 80);
     lv_obj_align(info_panel, LV_ALIGN_TOP_MID, 0, 0);
-    lv_obj_set_style_bg_color(info_panel, lv_color_make(40, 40, 60), 0);
-    lv_obj_set_style_bg_opa(info_panel, LV_OPA_50, 0);
-    lv_obj_set_style_border_color(info_panel, lv_color_make(80, 80, 120), 0);
+    lv_obj_set_style_bg_color(info_panel, lv_color_make(40, 40, 40), 0);
+    lv_obj_set_style_bg_opa(info_panel, LV_OPA_40, 0);
+    lv_obj_set_style_border_color(info_panel, lv_color_make(120, 120, 120), 0);
     lv_obj_set_style_border_width(info_panel, 1, 0);
-    lv_obj_set_style_border_opa(info_panel, LV_OPA_60, 0);
+    lv_obj_set_style_border_opa(info_panel, LV_OPA_40, 0);
     lv_obj_set_style_radius(info_panel, 8, 0);
     lv_obj_set_flex_flow(info_panel, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(info_panel, LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
@@ -547,19 +679,19 @@ void setupUtilityPage(lv_obj_t *parent)
     lv_obj_t *time_label = lv_label_create(info_panel);
     lv_label_set_text(time_label, "12:34");
     lv_obj_set_style_text_font(time_label, &lv_font_montserrat_24, 0);
-    lv_obj_set_style_text_color(time_label, lv_color_make(100, 200, 255), 0);
+    lv_obj_set_style_text_color(time_label, lv_color_make(200, 200, 200), 0);
 
     // Battery display (store reference globally)
     battery_label_util = lv_label_create(info_panel);
     lv_label_set_text(battery_label_util, LV_SYMBOL_BATTERY_FULL " --");
     lv_obj_set_style_text_font(battery_label_util, &lv_font_montserrat_24, 0);
-    lv_obj_set_style_text_color(battery_label_util, lv_color_make(100, 255, 150), 0);
+    lv_obj_set_style_text_color(battery_label_util, lv_color_make(180, 180, 180), 0);
 
     // Connection status
     lv_obj_t *conn_label = lv_label_create(info_panel);
     lv_label_set_text(conn_label, LV_SYMBOL_BLUETOOTH " ON");
     lv_obj_set_style_text_font(conn_label, &lv_font_montserrat_20, 0);
-    lv_obj_set_style_text_color(conn_label, lv_color_make(150, 150, 255), 0);
+    lv_obj_set_style_text_color(conn_label, lv_color_make(180, 180, 180), 0);
 
     // Create grid container for buttons
     lv_obj_t *grid = lv_obj_create(glass);
@@ -648,15 +780,15 @@ void updateBatteryDisplay()
         lv_color_t color;
         if (percentage >= 30)
         {
-            color = lv_color_make(100, 255, 150); // Green
+            color = lv_color_make(200, 200, 200); // Light gray
         }
         else if (percentage >= 15)
         {
-            color = lv_color_make(255, 200, 100); // Orange
+            color = lv_color_make(180, 180, 180); // Medium gray
         }
         else
         {
-            color = lv_color_make(255, 100, 100); // Red
+            color = lv_color_make(150, 150, 150); // Darker gray
         }
 
         // Update all battery labels
@@ -688,19 +820,45 @@ void updateBatteryDisplay()
 
 void setupUI()
 {
-    tabview = lv_tabview_create(lv_scr_act(), LV_DIR_TOP, 0);
-    lv_obj_set_size(tabview, LV_PCT(100), LV_PCT(100));
+    // Remove padding from the screen itself
+    lv_obj_t *screen = lv_scr_act();
+    lv_obj_set_style_pad_all(screen, 0, 0);
+    lv_obj_set_style_bg_color(screen, lv_color_black(), 0);
+    lv_obj_set_style_border_width(screen, 0, 0);
+
+    // Create tabview with actual display dimensions (like factory code)
+    tabview = lv_tabview_create(screen, LV_DIR_TOP, 0);
+    lv_obj_set_size(tabview, lv_disp_get_hor_res(NULL), lv_disp_get_ver_res(NULL));
+    lv_obj_set_scrollbar_mode(tabview, LV_SCROLLBAR_MODE_OFF);
+
+    // Remove all padding, borders, and radius from tabview
+    lv_obj_set_style_pad_all(tabview, 0, 0);
+    lv_obj_set_style_border_width(tabview, 0, 0);
+    lv_obj_set_style_radius(tabview, 0, 0);
+    lv_obj_set_style_bg_color(tabview, lv_color_black(), 0);
+
+    // Get the tab content area and ensure it has no padding or borders
+    lv_obj_t *tab_content = lv_tabview_get_content(tabview);
+    lv_obj_set_style_pad_all(tab_content, 0, 0);
+    lv_obj_set_style_border_width(tab_content, 0, 0);
+    lv_obj_set_style_bg_color(tab_content, lv_color_black(), 0);
 
     page1 = lv_tabview_add_tab(tabview, "Connections");
     page2 = lv_tabview_add_tab(tabview, "Board Info");
-    // page4 = lv_tabview_add_tab(tabview, "Utilities");
-    // page3 will be created dynamically when first connected
+
+    // Remove padding and borders from pages
+    lv_obj_set_style_pad_all(page1, 0, 0);
+    lv_obj_set_style_border_width(page1, 0, 0);
+    lv_obj_set_style_bg_color(page1, lv_color_black(), 0);
+
+    lv_obj_set_style_pad_all(page2, 0, 0);
+    lv_obj_set_style_border_width(page2, 0, 0);
+    lv_obj_set_style_bg_color(page2, lv_color_black(), 0);
 
     setupConnectionPage(page1);
     setupInfoPage(page2);
     setupUtilityPage(page4);
 
-    // Initial battery update
     updateBatteryDisplay();
 
     Serial.println("UI ready with 3 pages! (Media page will appear on connection)");

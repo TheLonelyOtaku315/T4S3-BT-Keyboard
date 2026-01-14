@@ -2,14 +2,24 @@
 #include <lvgl.h>
 #include "hardware/LilyGo_AMOLED.h"
 #include "ui/LV_Helper.h"
-#include "ui/ui_setup.h"
-#include "ui/pages/info_page.h"
+
+// Choose your UI:
+#define USE_SQUARELINE_UI 1 // Set to 1 for SquareLine Studio UI, 0 for old custom UI
+
+#if USE_SQUARELINE_UI
+#include "ui/squareline_studio/ui.h"
+#else
+#include "ui/old_custom_ui/ui_setup.h"
+#endif
+
 #include <BleKeyboard.h>
 #include <esp_wifi.h>
 #include <esp_bt.h>
 #include <esp_gap_ble_api.h>
 
-extern BleKeyboard bleKeyboard;
+// BLE Keyboard instance
+BleKeyboard bleKeyboard("T4-S3 Keyboard", "LilyGO", 100);
+
 LilyGo_Class amoled;
 
 // Power management settings
@@ -92,7 +102,18 @@ void setup()
     beginLvglHelper(amoled);
     Serial.println("LVGL initialized");
 
+    // Initialize UI based on selection
+#if USE_SQUARELINE_UI
+    ui_init();
+    Serial.println("SquareLine Studio UI loaded");
+#else
     setupUI();
+    Serial.println("Custom UI loaded");
+#endif
+
+    // Start BLE Keyboard
+    bleKeyboard.begin();
+    Serial.println("BLE Keyboard started");
 
     // Disable WiFi for BLE stability
     esp_wifi_stop();
@@ -101,7 +122,7 @@ void setup()
     // Release Classic BT memory
     esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT);
 
-    Serial.println("Ready - Press Device 1 or Device 2 to start");
+    Serial.println("T4-S3 Keyboard Ready!");
 }
 
 void loop()
@@ -116,14 +137,6 @@ void loop()
 
     // Check display timeout for auto-dim and sleep
     checkDisplayTimeout();
-
-    // Update battery display every 10 seconds
-    static unsigned long lastBatteryUpdate = 0;
-    if (millis() - lastBatteryUpdate >= 10000)
-    {
-        updateBatteryDisplay();
-        lastBatteryUpdate = millis();
-    }
 
     delay(5);
 }

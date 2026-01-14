@@ -1,5 +1,5 @@
 #include "media_page.h"
-#include "../ui_config.h"
+#include "../old_custom_ui/ui_config.h"
 #include "../components/button_factory.h"
 #include "../components/status_screen.h"
 #include <Arduino.h>

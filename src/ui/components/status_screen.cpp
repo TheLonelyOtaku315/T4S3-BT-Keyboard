@@ -1,5 +1,5 @@
 #include "status_screen.h"
-#include "../ui_config.h"
+#include "../old_custom_ui/ui_config.h"
 
 static lv_obj_t *status_screen = NULL;
 static lv_obj_t *status_label = NULL;

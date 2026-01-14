@@ -1,7 +1,7 @@
 #include "info_page.h"
-#include "../ui_config.h"
+#include "../old_custom_ui/ui_config.h"
 #include "../components/button_factory.h"
-#include "../ui_setup.h"
+#include "../old_custom_ui/ui_setup.h"
 #include "../../hardware/LilyGo_AMOLED.h"
 #include <Arduino.h>
 

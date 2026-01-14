@@ -11,9 +11,7 @@
 
 // External references
 extern LilyGo_Class amoled;
-
-// Bluetooth keyboard object
-BleKeyboard bleKeyboard("T4-S3 Keyboard", "LilyGO", 100);
+extern BleKeyboard bleKeyboard; // Defined in main.cpp
 
 // Global UI objects
 lv_obj_t *tabview;

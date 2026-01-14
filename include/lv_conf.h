@@ -46,7 +46,12 @@
  *=========================*/
 
 /*1: use custom malloc/free, 0: use the built-in `lv_mem_alloc()` and `lv_mem_free()`*/
+#ifdef SIMULATOR
+#define LV_MEM_CUSTOM 0
+#else
 #define LV_MEM_CUSTOM 1
+#endif
+
 #if LV_MEM_CUSTOM == 0
 /*Size of the memory available for `lv_mem_alloc()` in bytes (>= 2kB)*/
 #define LV_MEM_SIZE (48U * 1024U)          /*[bytes]*/
@@ -85,11 +90,19 @@
 
 /*Use a custom tick source that tells the elapsed time in milliseconds.
  *It removes the need to manually update the tick with `lv_tick_inc()`)*/
+#ifdef SIMULATOR
+#define LV_TICK_CUSTOM 1
+#if LV_TICK_CUSTOM
+#define LV_TICK_CUSTOM_INCLUDE <SDL2/SDL.h>
+#define LV_TICK_CUSTOM_SYS_TIME_EXPR (SDL_GetTicks())
+#endif   /*LV_TICK_CUSTOM*/
+#else
 #define LV_TICK_CUSTOM 1
 #if LV_TICK_CUSTOM
 #define LV_TICK_CUSTOM_INCLUDE "Arduino.h"         /*Header for the system time function*/
 #define LV_TICK_CUSTOM_SYS_TIME_EXPR (millis())    /*Expression evaluating to current system time in ms*/
 #endif   /*LV_TICK_CUSTOM*/
+#endif   /*SIMULATOR*/
 
 /*Default Dot Per Inch. Used to initialize default sizes such as widgets sized, style paddings.
  *(Not so important, you can adjust it to modify default sizes and spaces)*/

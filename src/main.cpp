@@ -1,25 +1,62 @@
 #include <Arduino.h>
 #include <lvgl.h>
 #include "hardware/LilyGo_AMOLED.h"
-#include "ui/LV_Helper.h"
+#include "LV_Helper.h"
+#include "ui/ui.h"
 
 LilyGo_Class amoled;
 
-// Button object
-lv_obj_t *btn;
-lv_obj_t *label;
+// State tracking
+int currentDevice = 0; // 0 = none, 1 = device1, 2 = device2, 3 = device3
 
-// Button click callback
-void button_event_cb(lv_event_t *e)
+// Button event handlers
+void device1_btn_handler(lv_event_t *e)
 {
-    Serial.println("Button pressed");
+    currentDevice = 1;
+    lv_label_set_text(ui_heaterContent, "Device 1 Selected");
+    Serial.println("Device 1 button pressed");
+}
+
+void device2_btn_handler(lv_event_t *e)
+{
+    currentDevice = 2;
+    lv_label_set_text(ui_heaterContent, "Device 2 Selected");
+    Serial.println("Device 2 button pressed");
+}
+
+void device3_btn_handler(lv_event_t *e)
+{
+    currentDevice = 3;
+    lv_label_set_text(ui_heaterContent, "Device 3 Selected");
+    Serial.println("Device 3 button pressed");
+}
+
+void disconnect_btn_handler(lv_event_t *e)
+{
+    currentDevice = 0;
+    lv_label_set_text(ui_heaterContent, "Disconnected");
+    Serial.println("Disconnect button pressed");
+}
+
+void reboot_btn_handler(lv_event_t *e)
+{
+    lv_label_set_text(ui_heaterContent, "Rebooting...");
+    Serial.println("Reboot button pressed");
+    delay(1000);
+    ESP.restart();
+}
+
+void setting_btn_handler(lv_event_t *e)
+{
+    lv_label_set_text(ui_heaterContent, "Settings");
+    Serial.println("Settings button pressed");
 }
 
 void setup()
 {
     Serial.begin(115200);
     delay(2000);
-    Serial.println("\n=== Simple Button Test ===");
+    Serial.println("\n=== T4-S3 Bluetooth Macropad ===");
 
     bool rslt = amoled.begin();
     if (!rslt)
@@ -35,18 +72,22 @@ void setup()
     beginLvglHelper(amoled);
     Serial.println("LVGL initialized");
 
-    // Create a simple button in the center of the screen
-    btn = lv_btn_create(lv_scr_act());
-    lv_obj_set_size(btn, 200, 80);
-    lv_obj_center(btn);
-    lv_obj_add_event_cb(btn, button_event_cb, LV_EVENT_CLICKED, NULL);
+    // Initialize SquareLine Studio UI
+    ui_init();
+    Serial.println("UI loaded");
 
-    // Add label to button
-    label = lv_label_create(btn);
-    lv_label_set_text(label, "Press Me");
-    lv_obj_center(label);
+    // Connect button event handlers
+    lv_obj_add_event_cb(ui_device1Btn, device1_btn_handler, LV_EVENT_CLICKED, NULL);
+    lv_obj_add_event_cb(ui_device2Btn, device2_btn_handler, LV_EVENT_CLICKED, NULL);
+    lv_obj_add_event_cb(ui_device3Btn, device3_btn_handler, LV_EVENT_CLICKED, NULL);
+    lv_obj_add_event_cb(ui_disconnectBtn, disconnect_btn_handler, LV_EVENT_CLICKED, NULL);
+    lv_obj_add_event_cb(ui_rebootBtn, reboot_btn_handler, LV_EVENT_CLICKED, NULL);
+    lv_obj_add_event_cb(ui_settingBtn, setting_btn_handler, LV_EVENT_CLICKED, NULL);
 
-    Serial.println("Button created - Ready!");
+    // Set initial label text
+    lv_label_set_text(ui_heaterContent, "Ready");
+
+    Serial.println("All button handlers connected - Ready!");
 }
 
 void loop()

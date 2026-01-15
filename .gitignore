@@ -41,3 +41,14 @@ build/
 
 # Miscellaneous
 *.bak
+
+# UI Designer files (SquareLine Studio)
+src/ui/*.spj
+src/ui/*.slp
+src/ui/*.sll
+src/ui/*.slt
+src/ui/project.info
+src/ui/backup/
+src/ui/cache/
+src/ui/assets/
+src/ui/fonts/

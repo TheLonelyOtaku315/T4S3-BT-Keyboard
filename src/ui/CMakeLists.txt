@@ -1,6 +1,11 @@
 SET(SOURCES screens/ui_Screen1.c
     ui.c
     components/ui_comp_hook.c
-    ui_helpers.c)
+    ui_helpers.c
+    images/ui_img_bluetooth_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png.c
+    images/ui_img_usb_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png.c
+    images/ui_img_mimo_disconnect_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png.c
+    images/ui_img_replay_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png.c
+    images/ui_img_settings_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png.c)
 
 add_library(ui ${SOURCES})

@@ -9,12 +9,48 @@ LilyGo_Class amoled;
 // State tracking
 int currentDevice = 0; // 0 = none, 1 = device1, 2 = device2, 3 = device3
 
+// Voltage calibration offset (PMU reads higher than actual)
+// Multimeter: 3.8-3.9V, PMU reads: 4.2V, so subtract ~350mV
+const int BATTERY_VOLTAGE_OFFSET = -350;
+
+// Calculate battery percentage from voltage (LiPo battery curve)
+int calculateBatteryPercent(uint16_t voltage)
+{
+    // Apply calibration offset
+    voltage += BATTERY_VOLTAGE_OFFSET;
+
+    // LiPo voltage curve: 3000mV=0%, 4200mV=100%
+    const int table[11] = {
+        3000, 3650, 3700, 3740, 3760, 3795,
+        3840, 3910, 3980, 4070, 4150};
+
+    if (voltage < table[0])
+        return 0;
+    if (voltage >= table[10])
+        return 100;
+
+    for (int i = 0; i < 11; i++)
+    {
+        if (voltage < table[i])
+            return i * 10 - (10 * (int)(table[i] - voltage)) / (int)(table[i] - table[i - 1]);
+    }
+    return 100;
+}
+
 // Battery update function
 void updateBattery()
 {
     int batteryPercent = amoled.getBatteryPercent();
     bool isCharging = amoled.isCharging();
     bool isUsbConnected = amoled.isVbusIn();
+
+    // If PMU gauge not calibrated, calculate from voltage
+    if (batteryPercent < 0 && amoled.isBatteryConnect())
+    {
+        uint16_t voltage = amoled.getBattVoltage();
+        batteryPercent = calculateBatteryPercent(voltage);
+        Serial.printf("Calculated %d%% from %dmV\n", batteryPercent, voltage);
+    }
 
     // Update battery percentage label
     char batteryText[32];
@@ -42,6 +78,8 @@ void updateBattery()
         snprintf(batteryText, sizeof(batteryText), "--");
         lv_bar_set_value(ui_batteryIcon, 0, LV_ANIM_ON);
     }
+
+    Serial.printf("Setting battery text: '%s'\n", batteryText);
     lv_label_set_text(ui_batteryPourcentage, batteryText);
 }
 
@@ -132,9 +170,23 @@ void loop()
 {
     lv_task_handler();
 
-    // Update battery every 30 seconds
+    // Debug: Print battery info every 2 seconds
+    static unsigned long lastDebugPrint = 0;
+    if (millis() - lastDebugPrint > 2000)
+    {
+        int batteryPercent = amoled.getBatteryPercent();
+        bool isCharging = amoled.isCharging();
+        bool isUsbConnected = amoled.isVbusIn();
+        uint16_t battVoltage = amoled.getBattVoltage();
+
+        Serial.printf("Batt: %d%%, Voltage: %d mV, Charging: %d, USB: %d\n",
+                      batteryPercent, battVoltage, isCharging, isUsbConnected);
+        lastDebugPrint = millis();
+    }
+
+    // Update battery every 5 seconds
     static unsigned long lastBatteryUpdate = 0;
-    if (millis() - lastBatteryUpdate > 30000)
+    if (millis() - lastBatteryUpdate > 5000)
     {
         updateBattery();
         lastBatteryUpdate = millis();

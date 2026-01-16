@@ -9,7 +9,42 @@ LilyGo_Class amoled;
 // State tracking
 int currentDevice = 0; // 0 = none, 1 = device1, 2 = device2, 3 = device3
 
-// Button event handlers
+// Battery update function
+void updateBattery()
+{
+    int batteryPercent = amoled.getBatteryPercent();
+    bool isCharging = amoled.isCharging();
+    bool isUsbConnected = amoled.isVbusIn();
+
+    // Update battery percentage label
+    char batteryText[32];
+    if (isCharging && batteryPercent >= 0)
+    {
+        // Charging with battery percentage
+        snprintf(batteryText, sizeof(batteryText), LV_SYMBOL_CHARGE " Charging %d%%", batteryPercent);
+        lv_bar_set_value(ui_batteryIcon, batteryPercent, LV_ANIM_ON);
+    }
+    else if (isUsbConnected && batteryPercent < 0)
+    {
+        // USB connected but no battery
+        snprintf(batteryText, sizeof(batteryText), "USB Connected");
+        lv_bar_set_value(ui_batteryIcon, 100, LV_ANIM_ON);
+    }
+    else if (batteryPercent >= 0)
+    {
+        // On battery power
+        snprintf(batteryText, sizeof(batteryText), "%d%%", batteryPercent);
+        lv_bar_set_value(ui_batteryIcon, batteryPercent, LV_ANIM_ON);
+    }
+    else
+    {
+        // Unknown state
+        snprintf(batteryText, sizeof(batteryText), "--");
+        lv_bar_set_value(ui_batteryIcon, 0, LV_ANIM_ON);
+    }
+    lv_label_set_text(ui_batteryPourcentage, batteryText);
+}
+
 void device1_btn_handler(lv_event_t *e)
 {
     currentDevice = 1;
@@ -87,11 +122,23 @@ void setup()
     // Set initial label text
     lv_label_set_text(ui_heaterContent, "Ready");
 
+    // Set initial battery display
+    updateBattery();
+
     Serial.println("All button handlers connected - Ready!");
 }
 
 void loop()
 {
     lv_task_handler();
+
+    // Update battery every 30 seconds
+    static unsigned long lastBatteryUpdate = 0;
+    if (millis() - lastBatteryUpdate > 30000)
+    {
+        updateBattery();
+        lastBatteryUpdate = millis();
+    }
+
     delay(5);
 }

@@ -1,125 +1,18 @@
 #include <Arduino.h>
 #include <lvgl.h>
+#include <BleKeyboard.h>
 #include "hardware/LilyGo_AMOLED.h"
 #include "LV_Helper.h"
 #include "ui/ui.h"
+#include "tab1_device_control.h"
+#include "tab2_media_control.h"
 
 LilyGo_Class amoled;
+BleKeyboard bleKeyboard("T4-S3 Keyboard", "LilyGo", 100);
 
-// State tracking
-int currentDevice = 0; // 0 = none, 1 = device1, 2 = device2, 3 = device3
-
-// Battery percentage based on typical LiPo discharge curve
-int calculateBatteryPercent(uint16_t voltage)
-{
-    // LiPo voltage ranges:
-    // 4.2V = 100% (fully charged)
-    // 3.7V = ~50% (nominal voltage)
-    // 3.3V = 0% (empty, cut-off)
-
-    if (voltage >= 4200)
-        return 100;
-    if (voltage <= 3300)
-        return 0;
-
-    // Linear approximation from 3.3V to 4.2V
-    // Range: 900mV (4200 - 3300)
-    return ((voltage - 3300) * 100) / 900;
-}
-// Battery update function
-void updateBattery()
-{
-    // Get raw voltage - this is the most reliable reading
-    uint16_t voltage = amoled.getBattVoltage();
-    bool isUsbConnected = amoled.isVbusIn();
-
-    // Calculate percentage from voltage (most reliable method for T4-S3)
-    int batteryPercent = 0;
-    bool isBatteryConnected = (voltage > 3000);
-
-    if (isBatteryConnected)
-    {
-        batteryPercent = calculateBatteryPercent(voltage);
-    }
-
-    // Determine charging state: USB connected AND battery present AND voltage increasing
-    // Note: isCharging() is unreliable, so we use USB + battery presence instead
-    bool isCharging = isUsbConnected && isBatteryConnected;
-
-    // Update battery percentage label
-    char batteryText[32];
-
-    if (!isBatteryConnected && isUsbConnected)
-    {
-        // USB connected but no battery
-        snprintf(batteryText, sizeof(batteryText), "USB Only");
-        lv_bar_set_value(ui_batteryIcon, 100, LV_ANIM_ON);
-    }
-    else if (!isBatteryConnected)
-    {
-        // No battery and no USB
-        snprintf(batteryText, sizeof(batteryText), "No Battery");
-        lv_bar_set_value(ui_batteryIcon, 0, LV_ANIM_ON);
-    }
-    else if (isCharging)
-    {
-        // Charging with battery present
-        snprintf(batteryText, sizeof(batteryText), LV_SYMBOL_CHARGE " Charging %d%%", batteryPercent);
-        lv_bar_set_value(ui_batteryIcon, batteryPercent, LV_ANIM_ON);
-    }
-    else
-    {
-        // On battery power
-        snprintf(batteryText, sizeof(batteryText), "%d%%", batteryPercent);
-        lv_bar_set_value(ui_batteryIcon, batteryPercent, LV_ANIM_ON);
-    }
-
-    Serial.printf("Voltage: %dmV, Percent: %d%%, USB: %d, Text: '%s'\n",
-                  voltage, batteryPercent, isUsbConnected, batteryText);
-    lv_label_set_text(ui_batteryPourcentage, batteryText);
-}
-
-void device1_btn_handler(lv_event_t *e)
-{
-    currentDevice = 1;
-    lv_label_set_text(ui_heaterContent, "Device 1 Selected");
-    Serial.println("Device 1 button pressed");
-}
-
-void device2_btn_handler(lv_event_t *e)
-{
-    currentDevice = 2;
-    lv_label_set_text(ui_heaterContent, "Device 2 Selected");
-    Serial.println("Device 2 button pressed");
-}
-
-void device3_btn_handler(lv_event_t *e)
-{
-    currentDevice = 3;
-    lv_label_set_text(ui_heaterContent, "Device 3 Selected");
-    Serial.println("Device 3 button pressed");
-}
-
-void disconnect_btn_handler(lv_event_t *e)
-{
-    currentDevice = 0;
-    lv_label_set_text(ui_heaterContent, "Disconnected");
-    Serial.println("Disconnect button pressed");
-}
-
-void reboot_btn_handler(lv_event_t *e)
-{
-    lv_label_set_text(ui_heaterContent, "Rebooting...");
-    Serial.println("Reboot button pressed");
-    delay(1000);
-    ESP.restart();
-}
-
-void setting_btn_handler(lv_event_t *e)
-{
-    lv_label_set_text(ui_heaterContent, "Settings");
-    Serial.println("Settings button pressed");
-}
+// Disconnect timer variables (used by disconnect button handler)
+unsigned long disconnectTime = 0;
+bool showingDisconnected = false;
 
 void setup()
 {
@@ -138,6 +31,13 @@ void setup()
     Serial.println("Display initialized successfully");
     amoled.setBrightness(128);
 
+    // Start BLE Keyboard
+    Serial.println("Starting BLE Keyboard...");
+    bleKeyboard.begin();
+    delay(1000); // Give BLE time to start
+    Serial.println("BLE Keyboard ready");
+    Serial.println("Device should appear as: T4-S3 Keyboard");
+
     beginLvglHelper(amoled);
     Serial.println("LVGL initialized");
 
@@ -145,19 +45,9 @@ void setup()
     ui_init();
     Serial.println("UI loaded");
 
-    // Connect button event handlers
-    lv_obj_add_event_cb(ui_device1Btn, device1_btn_handler, LV_EVENT_CLICKED, NULL);
-    lv_obj_add_event_cb(ui_device2Btn, device2_btn_handler, LV_EVENT_CLICKED, NULL);
-    lv_obj_add_event_cb(ui_device3Btn, device3_btn_handler, LV_EVENT_CLICKED, NULL);
-    lv_obj_add_event_cb(ui_disconnectBtn, disconnect_btn_handler, LV_EVENT_CLICKED, NULL);
-    lv_obj_add_event_cb(ui_rebootBtn, reboot_btn_handler, LV_EVENT_CLICKED, NULL);
-    lv_obj_add_event_cb(ui_settingBtn, setting_btn_handler, LV_EVENT_CLICKED, NULL);
-
-    // Set initial label text
-    lv_label_set_text(ui_heaterContent, "Ready");
-
-    // Set initial battery display
-    updateBattery();
+    // Initialize Tab1 and Tab2 event handlers
+    tab1_init();
+    tab2_init();
 
     Serial.println("All button handlers connected - Ready!");
 }
@@ -166,26 +56,69 @@ void loop()
 {
     lv_task_handler();
 
-    // Debug: Print battery info every 2 seconds
-    static unsigned long lastDebugPrint = 0;
-    if (millis() - lastDebugPrint > 2000)
+    // Update info tab live data every 1 second
+    static unsigned long lastInfoUpdate = 0;
+    if (millis() - lastInfoUpdate >= 1000)
     {
-        int batteryPercent = amoled.getBatteryPercent();
-        bool isCharging = amoled.isCharging();
-        bool isUsbConnected = amoled.isVbusIn();
-        uint16_t battVoltage = amoled.getBattVoltage();
+        lastInfoUpdate = millis();
 
-        Serial.printf("Batt: %d%%, Voltage: %d mV, Charging: %d, USB: %d\n",
-                      batteryPercent, battVoltage, isCharging, isUsbConnected);
-        lastDebugPrint = millis();
+        // Update temperature
+        float temp = amoled.readCoreTemp();
+        char tempStr[16];
+        sprintf(tempStr, "%.1f°C", temp);
+        lv_label_set_text(ui_Label18, tempStr);
+
+        // Update free heap memory
+        int freeHeap = ESP.getFreeHeap() / 1024; // Convert to KB
+        char heapStr[16];
+        sprintf(heapStr, "%d KB", freeHeap);
+        lv_label_set_text(ui_Label17, heapStr);
     }
 
-    // Update battery every 2 seconds
-    static unsigned long lastBatteryUpdate = 0;
-    if (millis() - lastBatteryUpdate > 2000)
+    // Check connection status and update UI
+    static bool lastConnectionState = false;
+    bool currentConnectionState = bleKeyboard.isConnected();
+
+    if (currentConnectionState != lastConnectionState)
     {
-        updateBattery();
-        lastBatteryUpdate = millis();
+        lastConnectionState = currentConnectionState;
+
+        if (currentConnectionState)
+        {
+            // Just connected
+            Serial.println("Device connected!");
+            lv_label_set_text(ui_heaterContent, "Connected " LV_SYMBOL_OK);
+            lv_obj_set_style_bg_color(ui_heater, lv_color_hex(0x2D8659), LV_PART_MAIN | LV_STATE_DEFAULT); // Dark green
+            lv_obj_clear_flag(ui_tab2, LV_OBJ_FLAG_HIDDEN);                                                // Show tab2
+            showingDisconnected = false;
+        }
+        else
+        {
+            // Just disconnected
+            Serial.println("Device disconnected!");
+            lv_label_set_text(ui_heaterContent, "Disconnected");
+            lv_obj_set_style_bg_color(ui_heater, lv_color_hex(0xC42B1C), LV_PART_MAIN | LV_STATE_DEFAULT); // Red
+            lv_obj_add_flag(ui_tab2, LV_OBJ_FLAG_HIDDEN);                                                  // Hide tab2
+            disconnectTime = millis();
+            showingDisconnected = true;
+        }
+    }
+
+    // After 4 seconds of showing Disconnected, change to Ready
+    if (showingDisconnected && (millis() - disconnectTime >= 4000))
+    {
+        lv_label_set_text(ui_heaterContent, "Ready");
+        lv_obj_set_style_bg_color(ui_heater, lv_color_hex(0x2D2D30), LV_PART_MAIN | LV_STATE_DEFAULT); // Default surface color
+        showingDisconnected = false;
+    }
+
+    // Debug: Print connection status every 5 seconds
+    static unsigned long lastCheck = 0;
+    if (millis() - lastCheck > 5000)
+    {
+        Serial.print("BLE Status - Connected: ");
+        Serial.println(bleKeyboard.isConnected() ? "YES" : "NO (waiting for device to pair)");
+        lastCheck = millis();
     }
 
     delay(5);

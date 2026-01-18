@@ -19,6 +19,7 @@ extern lv_obj_t * ui_heaterContent;
 extern lv_obj_t * ui_battery;
 extern lv_obj_t * ui_batteryPourcentage;
 extern lv_obj_t * ui_batteryIcon;
+extern lv_obj_t * ui_main;
 extern lv_obj_t * ui_tab1;
 extern lv_obj_t * ui_device1Btn;
 extern lv_obj_t * ui_Image1;
@@ -38,6 +39,25 @@ extern lv_obj_t * ui_Label5;
 extern lv_obj_t * ui_settingBtn;
 extern lv_obj_t * ui_settingIcon;
 extern lv_obj_t * ui_Label6;
+extern lv_obj_t * ui_tab2;
+extern lv_obj_t * ui_device1Btn1;
+extern lv_obj_t * ui_previousIcon;
+extern lv_obj_t * ui_Label7;
+extern lv_obj_t * ui_pausePlayBtn;
+extern lv_obj_t * ui_pausePlayIcon;
+extern lv_obj_t * ui_Label8;
+extern lv_obj_t * ui_device3Btn1;
+extern lv_obj_t * ui_nextIcon;
+extern lv_obj_t * ui_Label9;
+extern lv_obj_t * ui_disconnectBtn1;
+extern lv_obj_t * ui_muteIcon;
+extern lv_obj_t * ui_Label10;
+extern lv_obj_t * ui_rebootBtn1;
+extern lv_obj_t * ui_volumeDownIcon;
+extern lv_obj_t * ui_Label11;
+extern lv_obj_t * ui_settingBtn1;
+extern lv_obj_t * ui_volumeUpIcon;
+extern lv_obj_t * ui_Label12;
 // CUSTOM VARIABLES
 
 #ifdef __cplusplus

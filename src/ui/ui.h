@@ -29,9 +29,21 @@ extern lv_obj_t * ui____initial_actions0;
 
 // IMAGES AND IMAGE SETS
 LV_IMG_DECLARE(
+    ui_img_fingerprint_45dp_e3e3e3_fill0_wght400_grad0_opsz48_png);    // assets/fingerprint_45dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png
+LV_IMG_DECLARE(
+    ui_img_memory_alt_45dp_e3e3e3_fill0_wght400_grad0_opsz48_png);    // assets/memory_alt_45dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png
+LV_IMG_DECLARE(
+    ui_img_device_thermostat_45dp_e3e3e3_fill0_wght400_grad0_opsz48_png);    // assets/device_thermostat_45dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png
+LV_IMG_DECLARE(
+    ui_img_memory_45dp_e3e3e3_fill0_wght400_grad0_opsz48_png);    // assets/memory_45dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png
+LV_IMG_DECLARE(
+    ui_img_close_45dp_e3e3e3_fill0_wght400_grad0_opsz48_png);    // assets/close_45dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png
+LV_IMG_DECLARE(
     ui_img_bluetooth_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png);    // assets/bluetooth_90dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png
 LV_IMG_DECLARE(
     ui_img_usb_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png);    // assets/usb_90dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png
+LV_IMG_DECLARE(
+    ui_img_info_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png);    // assets/info_90dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png
 LV_IMG_DECLARE(
     ui_img_mimo_disconnect_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png);    // assets/mimo_disconnect_90dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png
 LV_IMG_DECLARE(

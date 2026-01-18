@@ -9,77 +9,73 @@ LilyGo_Class amoled;
 // State tracking
 int currentDevice = 0; // 0 = none, 1 = device1, 2 = device2, 3 = device3
 
-// Voltage calibration offset (PMU reads higher than actual)
-// Multimeter: 3.8-3.9V, PMU reads: 4.2V, so subtract ~350mV
-const int BATTERY_VOLTAGE_OFFSET = -350;
-
-// Calculate battery percentage from voltage (LiPo battery curve)
+// Battery percentage based on typical LiPo discharge curve
 int calculateBatteryPercent(uint16_t voltage)
 {
-    // Apply calibration offset
-    voltage += BATTERY_VOLTAGE_OFFSET;
+    // LiPo voltage ranges:
+    // 4.2V = 100% (fully charged)
+    // 3.7V = ~50% (nominal voltage)
+    // 3.3V = 0% (empty, cut-off)
 
-    // LiPo voltage curve: 3000mV=0%, 4200mV=100%
-    const int table[11] = {
-        3000, 3650, 3700, 3740, 3760, 3795,
-        3840, 3910, 3980, 4070, 4150};
-
-    if (voltage < table[0])
-        return 0;
-    if (voltage >= table[10])
+    if (voltage >= 4200)
         return 100;
+    if (voltage <= 3300)
+        return 0;
 
-    for (int i = 0; i < 11; i++)
-    {
-        if (voltage < table[i])
-            return i * 10 - (10 * (int)(table[i] - voltage)) / (int)(table[i] - table[i - 1]);
-    }
-    return 100;
+    // Linear approximation from 3.3V to 4.2V
+    // Range: 900mV (4200 - 3300)
+    return ((voltage - 3300) * 100) / 900;
 }
-
 // Battery update function
 void updateBattery()
 {
-    int batteryPercent = amoled.getBatteryPercent();
-    bool isCharging = amoled.isCharging();
+    // Get raw voltage - this is the most reliable reading
+    uint16_t voltage = amoled.getBattVoltage();
     bool isUsbConnected = amoled.isVbusIn();
 
-    // If PMU gauge not calibrated, calculate from voltage
-    if (batteryPercent < 0 && amoled.isBatteryConnect())
+    // Calculate percentage from voltage (most reliable method for T4-S3)
+    int batteryPercent = 0;
+    bool isBatteryConnected = (voltage > 3000);
+
+    if (isBatteryConnected)
     {
-        uint16_t voltage = amoled.getBattVoltage();
         batteryPercent = calculateBatteryPercent(voltage);
-        Serial.printf("Calculated %d%% from %dmV\n", batteryPercent, voltage);
     }
+
+    // Determine charging state: USB connected AND battery present AND voltage increasing
+    // Note: isCharging() is unreliable, so we use USB + battery presence instead
+    bool isCharging = isUsbConnected && isBatteryConnected;
 
     // Update battery percentage label
     char batteryText[32];
-    if (isCharging && batteryPercent >= 0)
+
+    if (!isBatteryConnected && isUsbConnected)
     {
-        // Charging with battery percentage
+        // USB connected but no battery
+        snprintf(batteryText, sizeof(batteryText), "USB Only");
+        lv_bar_set_value(ui_batteryIcon, 100, LV_ANIM_ON);
+    }
+    else if (!isBatteryConnected)
+    {
+        // No battery and no USB
+        snprintf(batteryText, sizeof(batteryText), "No Battery");
+        lv_bar_set_value(ui_batteryIcon, 0, LV_ANIM_ON);
+    }
+    else if (isCharging)
+    {
+        // Charging with battery present
         snprintf(batteryText, sizeof(batteryText), LV_SYMBOL_CHARGE " Charging %d%%", batteryPercent);
         lv_bar_set_value(ui_batteryIcon, batteryPercent, LV_ANIM_ON);
     }
-    else if (isUsbConnected && batteryPercent < 0)
-    {
-        // USB connected but no battery
-        snprintf(batteryText, sizeof(batteryText), "USB Connected");
-        lv_bar_set_value(ui_batteryIcon, 100, LV_ANIM_ON);
-    }
-    else if (batteryPercent >= 0)
+    else
     {
         // On battery power
         snprintf(batteryText, sizeof(batteryText), "%d%%", batteryPercent);
         lv_bar_set_value(ui_batteryIcon, batteryPercent, LV_ANIM_ON);
     }
-    else
-    {
-        // Unknown state
-        snprintf(batteryText, sizeof(batteryText), "--");
-        lv_bar_set_value(ui_batteryIcon, 0, LV_ANIM_ON);
-    }
 
-    Serial.printf("Setting battery text: '%s'\n", batteryText);
+    Serial.printf("Voltage: %dmV, Percent: %d%%, USB: %d, Text: '%s'\n",
+                  voltage, batteryPercent, isUsbConnected, batteryText);
     lv_label_set_text(ui_batteryPourcentage, batteryText);
 }
 
@@ -184,9 +180,9 @@ void loop()
         lastDebugPrint = millis();
     }
 
-    // Update battery every 5 seconds
+    // Update battery every 2 seconds
     static unsigned long lastBatteryUpdate = 0;
-    if (millis() - lastBatteryUpdate > 5000)
+    if (millis() - lastBatteryUpdate > 2000)
     {
         updateBattery();
         lastBatteryUpdate = millis();

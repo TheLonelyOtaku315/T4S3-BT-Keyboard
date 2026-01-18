@@ -7,8 +7,7 @@
 #define _T4_S3_BLUETOOTH_MACROPAD_UI_H
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 #include <lvgl.h>
@@ -16,31 +15,45 @@ extern "C"
 #include "ui_helpers.h"
 #include "ui_events.h"
 
-    ///////////////////// SCREENS ////////////////////
+
+///////////////////// SCREENS ////////////////////
 
 #include "screens/ui_Screen1.h"
 
-    ///////////////////// VARIABLES ////////////////////
+///////////////////// VARIABLES ////////////////////
 
-    // EVENTS
 
-    extern lv_obj_t *ui____initial_actions0;
+// EVENTS
 
-    // IMAGES AND IMAGE SETS
-    LV_IMG_DECLARE(
-        ui_img_bluetooth_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png); // assets/bluetooth_90dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png
-    LV_IMG_DECLARE(
-        ui_img_usb_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png); // assets/usb_90dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png
-    LV_IMG_DECLARE(
-        ui_img_mimo_disconnect_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png); // assets/mimo_disconnect_90dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png
-    LV_IMG_DECLARE(
-        ui_img_replay_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png); // assets/replay_90dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png
-    LV_IMG_DECLARE(
-        ui_img_settings_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png); // assets/settings_90dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png
+extern lv_obj_t * ui____initial_actions0;
 
-    // UI INIT
-    void ui_init(void);
-    void ui_destroy(void);
+// IMAGES AND IMAGE SETS
+LV_IMG_DECLARE(
+    ui_img_bluetooth_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png);    // assets/bluetooth_90dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png
+LV_IMG_DECLARE(
+    ui_img_usb_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png);    // assets/usb_90dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png
+LV_IMG_DECLARE(
+    ui_img_mimo_disconnect_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png);    // assets/mimo_disconnect_90dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png
+LV_IMG_DECLARE(
+    ui_img_replay_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png);    // assets/replay_90dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png
+LV_IMG_DECLARE(
+    ui_img_settings_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png);    // assets/settings_90dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png
+LV_IMG_DECLARE(
+    ui_img_skip_previous_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png);    // assets/skip_previous_90dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png
+LV_IMG_DECLARE(
+    ui_img_play_pause_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png);    // assets/play_pause_90dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png
+LV_IMG_DECLARE(
+    ui_img_skip_next_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png);    // assets/skip_next_90dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png
+LV_IMG_DECLARE(
+    ui_img_volume_mute_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png);    // assets/volume_mute_90dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png
+LV_IMG_DECLARE(
+    ui_img_volume_down_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png);    // assets/volume_down_90dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png
+LV_IMG_DECLARE(
+    ui_img_volume_up_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png);    // assets/volume_up_90dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png
+
+// UI INIT
+void ui_init(void);
+void ui_destroy(void);
 
 #ifdef __cplusplus
 } /*extern "C"*/

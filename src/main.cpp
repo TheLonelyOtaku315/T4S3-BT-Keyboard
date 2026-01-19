@@ -6,6 +6,7 @@
 #include "ui/ui.h"
 #include "tab1_device_control.h"
 #include "tab2_media_control.h"
+#include "tab3_app_shortcuts.h"
 
 LilyGo_Class amoled;
 BleKeyboard bleKeyboard("T4-S3 Keyboard", "LilyGo", 100);
@@ -13,6 +14,7 @@ BleKeyboard bleKeyboard("T4-S3 Keyboard", "LilyGo", 100);
 // Disconnect timer variables (used by disconnect button handler)
 unsigned long disconnectTime = 0;
 bool showingDisconnected = false;
+bool bleDisabled = false; // Track if BLE was manually disabled
 
 void setup()
 {
@@ -31,12 +33,9 @@ void setup()
     Serial.println("Display initialized successfully");
     amoled.setBrightness(128);
 
-    // Start BLE Keyboard
-    Serial.println("Starting BLE Keyboard...");
-    bleKeyboard.begin();
-    delay(1000); // Give BLE time to start
-    Serial.println("BLE Keyboard ready");
-    Serial.println("Device should appear as: T4-S3 Keyboard");
+    // BLE will be started manually when Device 1 button is pressed
+    bleDisabled = true;
+    Serial.println("BLE is OFF - Press Device 1 to start Bluetooth");
 
     beginLvglHelper(amoled);
     Serial.println("LVGL initialized");
@@ -45,9 +44,10 @@ void setup()
     ui_init();
     Serial.println("UI loaded");
 
-    // Initialize Tab1 and Tab2 event handlers
+    // Initialize Tab1, Tab2, and Tab3 event handlers
     tab1_init();
     tab2_init();
+    tab3_init();
 
     Serial.println("All button handlers connected - Ready!");
 }
@@ -75,50 +75,45 @@ void loop()
         lv_label_set_text(ui_Label17, heapStr);
     }
 
-    // Check connection status and update UI
-    static bool lastConnectionState = false;
-    bool currentConnectionState = bleKeyboard.isConnected();
-
-    if (currentConnectionState != lastConnectionState)
+    // Monitor connection status when BLE is active
+    if (!bleDisabled)
     {
-        lastConnectionState = currentConnectionState;
+        static bool lastConnectionState = false;
+        bool currentConnectionState = bleKeyboard.isConnected();
 
-        if (currentConnectionState)
+        if (currentConnectionState != lastConnectionState)
         {
-            // Just connected
-            Serial.println("Device connected!");
-            lv_label_set_text(ui_heaterContent, "Connected " LV_SYMBOL_OK);
-            lv_obj_set_style_bg_color(ui_heater, lv_color_hex(0x2D8659), LV_PART_MAIN | LV_STATE_DEFAULT); // Dark green
-            lv_obj_clear_flag(ui_tab2, LV_OBJ_FLAG_HIDDEN);                                                // Show tab2
-            showingDisconnected = false;
-        }
-        else
-        {
-            // Just disconnected
-            Serial.println("Device disconnected!");
-            lv_label_set_text(ui_heaterContent, "Disconnected");
-            lv_obj_set_style_bg_color(ui_heater, lv_color_hex(0xC42B1C), LV_PART_MAIN | LV_STATE_DEFAULT); // Red
-            lv_obj_add_flag(ui_tab2, LV_OBJ_FLAG_HIDDEN);                                                  // Hide tab2
-            disconnectTime = millis();
-            showingDisconnected = true;
+            lastConnectionState = currentConnectionState;
+
+            if (currentConnectionState)
+            {
+                // Just connected
+                Serial.println("Device connected!");
+                lv_label_set_text(ui_heaterContent, "Connected " LV_SYMBOL_OK);
+                lv_obj_set_style_bg_color(ui_heater, lv_color_hex(0x2D8659), LV_PART_MAIN | LV_STATE_DEFAULT);
+                lv_obj_clear_flag(ui_tab2, LV_OBJ_FLAG_HIDDEN);
+                lv_obj_clear_flag(ui_tab3, LV_OBJ_FLAG_HIDDEN);
+            }
+            else
+            {
+                // Disconnected (but BLE still active)
+                Serial.println("Device disconnected!");
+                lv_label_set_text(ui_heaterContent, "Disconnected");
+                lv_obj_set_style_bg_color(ui_heater, lv_color_hex(0xC42B1C), LV_PART_MAIN | LV_STATE_DEFAULT);
+                lv_obj_add_flag(ui_tab2, LV_OBJ_FLAG_HIDDEN);
+                lv_obj_add_flag(ui_tab3, LV_OBJ_FLAG_HIDDEN);
+                disconnectTime = millis();
+                showingDisconnected = true;
+            }
         }
     }
 
     // After 4 seconds of showing Disconnected, change to Ready
     if (showingDisconnected && (millis() - disconnectTime >= 4000))
     {
-        lv_label_set_text(ui_heaterContent, "Ready");
+        lv_label_set_text(ui_heaterContent, "T4-S3 Keyboard Ready");
         lv_obj_set_style_bg_color(ui_heater, lv_color_hex(0x2D2D30), LV_PART_MAIN | LV_STATE_DEFAULT); // Default surface color
         showingDisconnected = false;
-    }
-
-    // Debug: Print connection status every 5 seconds
-    static unsigned long lastCheck = 0;
-    if (millis() - lastCheck > 5000)
-    {
-        Serial.print("BLE Status - Connected: ");
-        Serial.println(bleKeyboard.isConnected() ? "YES" : "NO (waiting for device to pair)");
-        lastCheck = millis();
     }
 
     delay(5);

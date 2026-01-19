@@ -2,27 +2,45 @@
 #include "ui/ui.h"
 #include <Arduino.h>
 #include <esp_system.h>
+#include <NimBLEDevice.h>
 
 // External variables for disconnect timer (defined in main.cpp)
 extern unsigned long disconnectTime;
 extern bool showingDisconnected;
+extern bool bleDisabled;
 
 // Tab1 Button Event Handlers
 void device1_btn_handler(lv_event_t *e)
 {
     Serial.println("Device 1 button pressed");
 
+    // If BLE was manually disabled, restart it
+    if (bleDisabled)
+    {
+        Serial.println("Starting BLE Keyboard...");
+        bleKeyboard.begin();
+        delay(1000); // Give BLE time to start
+        bleDisabled = false;
+
+        lv_label_set_text(ui_heaterContent, "Bluetooth On");
+        lv_obj_set_style_bg_color(ui_heater, lv_color_hex(0xC97B3E), LV_PART_MAIN | LV_STATE_DEFAULT); // Burnt orange
+        Serial.println("BLE started - Device: T4-S3 Keyboard");
+        return;
+    }
+
     if (bleKeyboard.isConnected())
     {
         lv_label_set_text(ui_heaterContent, "Connected " LV_SYMBOL_OK);
         lv_obj_set_style_bg_color(ui_heater, lv_color_hex(0x2D8659), LV_PART_MAIN | LV_STATE_DEFAULT); // Dark green
         lv_obj_clear_flag(ui_tab2, LV_OBJ_FLAG_HIDDEN);                                                // Show tab2
+        lv_obj_clear_flag(ui_tab3, LV_OBJ_FLAG_HIDDEN);                                                // Show tab3
     }
     else
     {
         lv_label_set_text(ui_heaterContent, "Pair Now");
         lv_obj_set_style_bg_color(ui_heater, lv_color_hex(0xC97B3E), LV_PART_MAIN | LV_STATE_DEFAULT); // Burnt orange
         lv_obj_add_flag(ui_tab2, LV_OBJ_FLAG_HIDDEN);                                                  // Hide tab2
+        lv_obj_add_flag(ui_tab3, LV_OBJ_FLAG_HIDDEN);                                                  // Hide tab3
     }
 }
 
@@ -34,37 +52,56 @@ void device2_btn_handler(lv_event_t *e)
 
 void disconnect_btn_handler(lv_event_t *e)
 {
+    Serial.println("Disconnect button pressed - Disconnecting BLE");
+
+    // Disconnect all active BLE connections
     if (bleKeyboard.isConnected())
     {
-        bleKeyboard.end();
-        Serial.println("BLE Keyboard stopped");
+        NimBLEServer *pServer = NimBLEDevice::getServer();
+        if (pServer != nullptr)
+        {
+            // Disconnect all connected clients
+            std::vector<uint16_t> connIds = pServer->getPeerDevices();
+            for (uint16_t connId : connIds)
+            {
+                pServer->disconnect(connId);
+            }
+            Serial.println("Disconnecting active BLE connections...");
+            delay(500); // Wait for disconnect to complete
+        }
     }
 
-    // Hide tab2 when disconnected
+    // Stop advertising so device doesn't auto-reconnect
+    NimBLEDevice::getAdvertising()->stop();
+    Serial.println("BLE advertising stopped");
+
+    bleDisabled = true;
+
+    // Hide tab2 and tab3 when disconnected
     lv_obj_add_flag(ui_tab2, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(ui_tab3, LV_OBJ_FLAG_HIDDEN);
 
     lv_label_set_text(ui_heaterContent, "Disconnected");
     lv_obj_set_style_bg_color(ui_heater, lv_color_hex(0xC42B1C), LV_PART_MAIN | LV_STATE_DEFAULT); // Red
 
-    // Trigger 4-second timer
+    // Trigger 4-second timer to show "Ready" message
     disconnectTime = millis();
     showingDisconnected = true;
-
-    Serial.println("Disconnect button pressed");
 }
 
 void reboot_btn_handler(lv_event_t *e)
 {
     lv_label_set_text(ui_heaterContent, "Rebooting...");
     Serial.println("Reboot button pressed");
+    lv_refr_now(NULL); // Force immediate display refresh
     delay(2000);
     ESP.restart();
 }
 
 void setting_btn_handler(lv_event_t *e)
 {
-    lv_label_set_text(ui_heaterContent, "Settings");
     Serial.println("Settings button pressed");
+    // Settings button should not change the header
 }
 
 void info_btn_handler(lv_event_t *e)
@@ -130,11 +167,12 @@ void tab1_init()
     lv_obj_add_event_cb(ui_Button1, info_close_btn_handler, LV_EVENT_CLICKED, NULL);
 
     // Set initial label text and default color
-    lv_label_set_text(ui_heaterContent, "Ready");
+    lv_label_set_text(ui_heaterContent, "T4-S3 Keyboard Ready");
     lv_obj_set_style_bg_color(ui_heater, lv_color_hex(0x2D2D30), LV_PART_MAIN | LV_STATE_DEFAULT); // Default surface color
 
-    // Hide tab2 until Bluetooth is connected
+    // Hide tab2 and tab3 until Bluetooth is connected
     lv_obj_add_flag(ui_tab2, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(ui_tab3, LV_OBJ_FLAG_HIDDEN);
 
     // Hide info tab initially
     lv_obj_add_flag(ui_infoTab, LV_OBJ_FLAG_HIDDEN);

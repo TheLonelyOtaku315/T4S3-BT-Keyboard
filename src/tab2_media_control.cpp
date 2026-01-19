@@ -62,12 +62,12 @@ void volume_up_btn_handler(lv_event_t *e)
 void tab2_init()
 {
     // Connect button event handlers for Tab2 (Media Controls)
-    lv_obj_add_event_cb(ui_device1Btn1, previous_btn_handler, LV_EVENT_CLICKED, NULL);
+    lv_obj_add_event_cb(ui_previousBtn, previous_btn_handler, LV_EVENT_CLICKED, NULL);
     lv_obj_add_event_cb(ui_pausePlayBtn, play_pause_btn_handler, LV_EVENT_CLICKED, NULL);
-    lv_obj_add_event_cb(ui_device3Btn1, next_btn_handler, LV_EVENT_CLICKED, NULL);
-    lv_obj_add_event_cb(ui_disconnectBtn1, mute_btn_handler, LV_EVENT_CLICKED, NULL);
-    lv_obj_add_event_cb(ui_rebootBtn1, volume_down_btn_handler, LV_EVENT_CLICKED, NULL);
-    lv_obj_add_event_cb(ui_settingBtn1, volume_up_btn_handler, LV_EVENT_CLICKED, NULL);
+    lv_obj_add_event_cb(ui_nextBtn, next_btn_handler, LV_EVENT_CLICKED, NULL);
+    lv_obj_add_event_cb(ui_muteBtn, mute_btn_handler, LV_EVENT_CLICKED, NULL);
+    lv_obj_add_event_cb(ui_volumeDownBtn, volume_down_btn_handler, LV_EVENT_CLICKED, NULL);
+    lv_obj_add_event_cb(ui_volumeUpBtn, volume_up_btn_handler, LV_EVENT_CLICKED, NULL);
 
     Serial.println("Tab2 (Media Control) handlers connected");
 }

@@ -62,6 +62,14 @@ LV_IMG_DECLARE(
     ui_img_volume_down_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png);    // assets/volume_down_90dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png
 LV_IMG_DECLARE(
     ui_img_volume_up_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png);    // assets/volume_up_90dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png
+LV_IMG_DECLARE(
+    ui_img_language_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png);    // assets/language_90dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png
+LV_IMG_DECLARE(ui_img_1999303404);    // assets/output-onlinepngtools.png
+LV_IMG_DECLARE(ui_img_705274890);    // assets/output-onlinepngtools (1).png
+LV_IMG_DECLARE(
+    ui_img_terminal_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png);    // assets/terminal_90dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png
+LV_IMG_DECLARE(ui_img_705276940);    // assets/output-onlinepngtools (3).png
+LV_IMG_DECLARE(ui_img_705273739);    // assets/output-onlinepngtools (2).png
 
 // UI INIT
 void ui_init(void);

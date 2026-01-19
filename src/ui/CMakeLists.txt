@@ -18,6 +18,12 @@ SET(SOURCES screens/ui_Screen1.c
     images/ui_img_skip_next_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png.c
     images/ui_img_volume_mute_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png.c
     images/ui_img_volume_down_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png.c
-    images/ui_img_volume_up_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png.c)
+    images/ui_img_volume_up_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png.c
+    images/ui_img_language_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png.c
+    images/ui_img_1999303404.c
+    images/ui_img_705274890.c
+    images/ui_img_terminal_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png.c
+    images/ui_img_705276940.c
+    images/ui_img_705273739.c)
 
 add_library(ui ${SOURCES})

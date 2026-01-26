@@ -39,6 +39,8 @@ LV_IMG_DECLARE(
 LV_IMG_DECLARE(
     ui_img_close_45dp_e3e3e3_fill0_wght400_grad0_opsz48_png);    // assets/close_45dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png
 LV_IMG_DECLARE(
+    ui_img_light_mode_45dp_e3e3e3_fill0_wght400_grad0_opsz48_png);    // assets/light_mode_45dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png
+LV_IMG_DECLARE(
     ui_img_bluetooth_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png);    // assets/bluetooth_90dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png
 LV_IMG_DECLARE(
     ui_img_usb_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png);    // assets/usb_90dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png

@@ -1,4 +1,5 @@
 #include "tab1_device_control.h"
+#include "tab5_settings.h"
 #include "ui/ui.h"
 #include <Arduino.h>
 #include <esp_system.h>
@@ -24,6 +25,9 @@ void device1_btn_handler(lv_event_t *e)
 
         lv_label_set_text(ui_heaterContent, "Bluetooth On");
         lv_obj_set_style_bg_color(ui_heater, lv_color_hex(0xC97B3E), LV_PART_MAIN | LV_STATE_DEFAULT); // Burnt orange
+        // Hide tabs since BLE started but not connected yet
+        lv_obj_add_flag(ui_mediaTab, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(ui_appTab, LV_OBJ_FLAG_HIDDEN);
         Serial.println("BLE started - Device: T4-S3 Keyboard");
         return;
     }
@@ -32,15 +36,15 @@ void device1_btn_handler(lv_event_t *e)
     {
         lv_label_set_text(ui_heaterContent, "Connected " LV_SYMBOL_OK);
         lv_obj_set_style_bg_color(ui_heater, lv_color_hex(0x2D8659), LV_PART_MAIN | LV_STATE_DEFAULT); // Dark green
-        lv_obj_clear_flag(ui_tab2, LV_OBJ_FLAG_HIDDEN);                                                // Show tab2
-        lv_obj_clear_flag(ui_tab3, LV_OBJ_FLAG_HIDDEN);                                                // Show tab3
+        lv_obj_clear_flag(ui_mediaTab, LV_OBJ_FLAG_HIDDEN);                                            // Show tab2
+        lv_obj_clear_flag(ui_appTab, LV_OBJ_FLAG_HIDDEN);                                              // Show tab3
     }
     else
     {
         lv_label_set_text(ui_heaterContent, "Pair Now");
         lv_obj_set_style_bg_color(ui_heater, lv_color_hex(0xC97B3E), LV_PART_MAIN | LV_STATE_DEFAULT); // Burnt orange
-        lv_obj_add_flag(ui_tab2, LV_OBJ_FLAG_HIDDEN);                                                  // Hide tab2
-        lv_obj_add_flag(ui_tab3, LV_OBJ_FLAG_HIDDEN);                                                  // Hide tab3
+        lv_obj_add_flag(ui_mediaTab, LV_OBJ_FLAG_HIDDEN);                                              // Hide tab2
+        lv_obj_add_flag(ui_appTab, LV_OBJ_FLAG_HIDDEN);                                                // Hide tab3
     }
 }
 
@@ -78,8 +82,8 @@ void disconnect_btn_handler(lv_event_t *e)
     bleDisabled = true;
 
     // Hide tab2 and tab3 when disconnected
-    lv_obj_add_flag(ui_tab2, LV_OBJ_FLAG_HIDDEN);
-    lv_obj_add_flag(ui_tab3, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(ui_mediaTab, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(ui_appTab, LV_OBJ_FLAG_HIDDEN);
 
     lv_label_set_text(ui_heaterContent, "Disconnected");
     lv_obj_set_style_bg_color(ui_heater, lv_color_hex(0xC42B1C), LV_PART_MAIN | LV_STATE_DEFAULT); // Red
@@ -96,12 +100,6 @@ void reboot_btn_handler(lv_event_t *e)
     lv_refr_now(NULL); // Force immediate display refresh
     delay(2000);
     ESP.restart();
-}
-
-void setting_btn_handler(lv_event_t *e)
-{
-    Serial.println("Settings button pressed");
-    // Settings button should not change the header
 }
 
 void info_btn_handler(lv_event_t *e)
@@ -158,7 +156,6 @@ void tab1_init()
 {
     // Connect button event handlers for Tab1
     lv_obj_add_event_cb(ui_device1Btn, device1_btn_handler, LV_EVENT_CLICKED, NULL);
-
     lv_obj_add_event_cb(ui_device2Btn, device2_btn_handler, LV_EVENT_CLICKED, NULL);
     lv_obj_add_event_cb(ui_infoBtn, info_btn_handler, LV_EVENT_CLICKED, NULL);
     lv_obj_add_event_cb(ui_disconnectBtn, disconnect_btn_handler, LV_EVENT_CLICKED, NULL);
@@ -170,15 +167,14 @@ void tab1_init()
     lv_label_set_text(ui_heaterContent, "T4-S3 Keyboard Ready");
     lv_obj_set_style_bg_color(ui_heater, lv_color_hex(0x2D2D30), LV_PART_MAIN | LV_STATE_DEFAULT); // Default surface color
 
-    // Hide tab2 and tab3 until Bluetooth is connected
-    lv_obj_add_flag(ui_tab2, LV_OBJ_FLAG_HIDDEN);
-    lv_obj_add_flag(ui_tab3, LV_OBJ_FLAG_HIDDEN);
-
     // Hide info tab initially
     lv_obj_add_flag(ui_infoTab, LV_OBJ_FLAG_HIDDEN);
 
     // Populate static info (MAC, Chip)
     populate_info_tab_static();
+
+    // Initialize settings tab
+    tab5_init();
 
     Serial.println("Tab1 (Device Control) handlers connected");
 }

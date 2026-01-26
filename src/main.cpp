@@ -32,6 +32,7 @@ void setup()
 
     Serial.println("Display initialized successfully");
     amoled.setBrightness(128);
+    amoled.setRotation(2); // Rotate screen 180 degrees
 
     // BLE will be started manually when Device 1 button is pressed
     bleDisabled = true;
@@ -43,6 +44,10 @@ void setup()
     // Initialize SquareLine Studio UI
     ui_init();
     Serial.println("UI loaded");
+
+    // Hide tabs 2 and 3 initially since BLE is disabled
+    lv_obj_add_flag(ui_mediaTab, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(ui_appTab, LV_OBJ_FLAG_HIDDEN);
 
     // Initialize Tab1, Tab2, and Tab3 event handlers
     tab1_init();
@@ -91,8 +96,8 @@ void loop()
                 Serial.println("Device connected!");
                 lv_label_set_text(ui_heaterContent, "Connected " LV_SYMBOL_OK);
                 lv_obj_set_style_bg_color(ui_heater, lv_color_hex(0x2D8659), LV_PART_MAIN | LV_STATE_DEFAULT);
-                lv_obj_clear_flag(ui_tab2, LV_OBJ_FLAG_HIDDEN);
-                lv_obj_clear_flag(ui_tab3, LV_OBJ_FLAG_HIDDEN);
+                lv_obj_clear_flag(ui_mediaTab, LV_OBJ_FLAG_HIDDEN);
+                lv_obj_clear_flag(ui_appTab, LV_OBJ_FLAG_HIDDEN);
             }
             else
             {
@@ -100,8 +105,8 @@ void loop()
                 Serial.println("Device disconnected!");
                 lv_label_set_text(ui_heaterContent, "Disconnected");
                 lv_obj_set_style_bg_color(ui_heater, lv_color_hex(0xC42B1C), LV_PART_MAIN | LV_STATE_DEFAULT);
-                lv_obj_add_flag(ui_tab2, LV_OBJ_FLAG_HIDDEN);
-                lv_obj_add_flag(ui_tab3, LV_OBJ_FLAG_HIDDEN);
+                lv_obj_add_flag(ui_mediaTab, LV_OBJ_FLAG_HIDDEN);
+                lv_obj_add_flag(ui_appTab, LV_OBJ_FLAG_HIDDEN);
                 disconnectTime = millis();
                 showingDisconnected = true;
             }

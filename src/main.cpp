@@ -135,10 +135,6 @@ void loop()
         sprintf(battStr, "%d%%", percent);
         lv_label_set_text(ui_batteryPourcentage, battStr);
 
-        // Serial output for debug/info
-        Serial.printf("Temp: %.1f°C, Heap: %d KB, Batt: %dmV (%d%%), Charging: %s\n",
-            temp, freeHeap, vbat, percent, isCharging() ? "YES" : "NO");
-
         // Set battery icon
         if (isCharging())
         {

@@ -16,6 +16,9 @@ extern void ui_Screen1_screen_destroy(void);
 extern lv_obj_t * ui_Screen1;
 extern lv_obj_t * ui_heater;
 extern lv_obj_t * ui_heaterContent;
+extern lv_obj_t * ui_Panel2;
+extern lv_obj_t * ui_batteryPourcentage;
+extern lv_obj_t * ui_batteryIcon;
 extern lv_obj_t * ui_infoTab;
 extern lv_obj_t * ui_Panel4;
 extern lv_obj_t * ui_Image6;
@@ -104,6 +107,14 @@ extern lv_obj_t * ui_Label21;
 extern lv_obj_t * ui_githubBtn;
 extern lv_obj_t * ui_githubIcon;
 extern lv_obj_t * ui_Label22;
+extern lv_obj_t * ui_Image12;
+extern lv_obj_t * ui_Image13;
+extern lv_obj_t * ui_Image14;
+extern lv_obj_t * ui_Image16;
+extern lv_obj_t * ui_Image17;
+extern lv_obj_t * ui_Image18;
+extern lv_obj_t * ui_Image19;
+extern lv_obj_t * ui_Image20;
 // CUSTOM VARIABLES
 
 #ifdef __cplusplus

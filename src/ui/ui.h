@@ -29,6 +29,8 @@ extern lv_obj_t * ui____initial_actions0;
 
 // IMAGES AND IMAGE SETS
 LV_IMG_DECLARE(
+    ui_img_battery_android_frame_alert_24dp_e3e3e3_fill0_wght400_grad0_opsz24_png);    // assets/battery_android_frame_alert_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.png
+LV_IMG_DECLARE(
     ui_img_fingerprint_45dp_e3e3e3_fill0_wght400_grad0_opsz48_png);    // assets/fingerprint_45dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png
 LV_IMG_DECLARE(
     ui_img_memory_alt_45dp_e3e3e3_fill0_wght400_grad0_opsz48_png);    // assets/memory_alt_45dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png
@@ -72,6 +74,22 @@ LV_IMG_DECLARE(
     ui_img_terminal_90dp_e3e3e3_fill0_wght400_grad0_opsz48_png);    // assets/terminal_90dp_E3E3E3_FILL0_wght400_GRAD0_opsz48.png
 LV_IMG_DECLARE(ui_img_705276940);    // assets/output-onlinepngtools (3).png
 LV_IMG_DECLARE(ui_img_705273739);    // assets/output-onlinepngtools (2).png
+LV_IMG_DECLARE(
+    ui_img_battery_android_frame_1_24dp_e3e3e3_fill0_wght400_grad0_opsz24_png);    // assets/battery_android_frame_1_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.png
+LV_IMG_DECLARE(
+    ui_img_battery_android_frame_2_24dp_e3e3e3_fill0_wght400_grad0_opsz24_png);    // assets/battery_android_frame_2_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.png
+LV_IMG_DECLARE(
+    ui_img_battery_android_frame_3_24dp_e3e3e3_fill0_wght400_grad0_opsz24_png);    // assets/battery_android_frame_3_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.png
+LV_IMG_DECLARE(
+    ui_img_battery_android_frame_4_24dp_e3e3e3_fill0_wght400_grad0_opsz24_png);    // assets/battery_android_frame_4_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.png
+LV_IMG_DECLARE(
+    ui_img_battery_android_frame_5_24dp_e3e3e3_fill0_wght400_grad0_opsz24_png);    // assets/battery_android_frame_5_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.png
+LV_IMG_DECLARE(
+    ui_img_battery_android_frame_6_24dp_e3e3e3_fill0_wght400_grad0_opsz24_png);    // assets/battery_android_frame_6_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.png
+LV_IMG_DECLARE(
+    ui_img_battery_android_frame_bolt_24dp_e3e3e3_fill0_wght400_grad0_opsz24_png);    // assets/battery_android_frame_bolt_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.png
+LV_IMG_DECLARE(
+    ui_img_battery_android_frame_full_24dp_e3e3e3_fill0_wght400_grad0_opsz24_png);    // assets/battery_android_frame_full_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.png
 
 // UI INIT
 void ui_init(void);

@@ -16,6 +16,55 @@ unsigned long disconnectTime = 0;
 bool showingDisconnected = false;
 bool bleDisabled = false; // Track if BLE was manually disabled
 
+struct BatteryPoint
+{
+    uint16_t voltage;
+    uint8_t percent;
+};
+
+uint8_t getBatteryPercent(uint16_t voltage_mv)
+{
+    static const BatteryPoint curve[] = {
+        {3300, 0},
+        {3600, 5},
+        {3700, 25},
+        {3800, 40},
+        {3900, 65},
+        {4000, 80},
+        {4100, 90},
+        {4200, 100}};
+
+    const uint8_t size = sizeof(curve) / sizeof(curve[0]);
+
+    if (voltage_mv <= curve[0].voltage)
+        return curve[0].percent;
+    if (voltage_mv >= curve[size - 1].voltage)
+        return curve[size - 1].percent;
+
+    // Find the right segment and interpolate
+    for (uint8_t i = 0; i < size - 1; i++)
+    {
+        if (voltage_mv >= curve[i].voltage && voltage_mv < curve[i + 1].voltage)
+        {
+            return curve[i].percent +
+                   ((voltage_mv - curve[i].voltage) *
+                    (curve[i + 1].percent - curve[i].percent)) /
+                       (curve[i + 1].voltage - curve[i].voltage);
+        }
+    }
+
+    return 0;
+}
+
+bool isCharging()
+{
+    uint16_t vbus = amoled.getVbusVoltage();
+    uint16_t vbat = amoled.getBattVoltage();
+
+    // USB connected AND battery not full
+    return (vbus > 4500) && (vbat < 4200);
+}
+
 void setup()
 {
     Serial.begin(115200);
@@ -78,6 +127,51 @@ void loop()
         char heapStr[16];
         sprintf(heapStr, "%d KB", freeHeap);
         lv_label_set_text(ui_Label17, heapStr);
+
+        // Update battery info
+        uint16_t vbat = amoled.getBattVoltage();
+        uint8_t percent = getBatteryPercent(vbat);
+        char battStr[8];
+        sprintf(battStr, "%d%%", percent);
+        lv_label_set_text(ui_batteryPourcentage, battStr);
+
+        // Set battery icon
+        if (isCharging())
+        {
+            lv_img_set_src(ui_batteryIcon, &ui_img_battery_android_frame_bolt_24dp_e3e3e3_fill0_wght400_grad0_opsz24_png);
+        }
+        else if (percent >= 100)
+        {
+            lv_img_set_src(ui_batteryIcon, &ui_img_battery_android_frame_full_24dp_e3e3e3_fill0_wght400_grad0_opsz24_png);
+        }
+        else if (percent >= 91)
+        {
+            lv_img_set_src(ui_batteryIcon, &ui_img_battery_android_frame_6_24dp_e3e3e3_fill0_wght400_grad0_opsz24_png);
+        }
+        else if (percent >= 81)
+        {
+            lv_img_set_src(ui_batteryIcon, &ui_img_battery_android_frame_5_24dp_e3e3e3_fill0_wght400_grad0_opsz24_png);
+        }
+        else if (percent >= 66)
+        {
+            lv_img_set_src(ui_batteryIcon, &ui_img_battery_android_frame_4_24dp_e3e3e3_fill0_wght400_grad0_opsz24_png);
+        }
+        else if (percent >= 41)
+        {
+            lv_img_set_src(ui_batteryIcon, &ui_img_battery_android_frame_3_24dp_e3e3e3_fill0_wght400_grad0_opsz24_png);
+        }
+        else if (percent >= 26)
+        {
+            lv_img_set_src(ui_batteryIcon, &ui_img_battery_android_frame_2_24dp_e3e3e3_fill0_wght400_grad0_opsz24_png);
+        }
+        else if (percent >= 10)
+        {
+            lv_img_set_src(ui_batteryIcon, &ui_img_battery_android_frame_1_24dp_e3e3e3_fill0_wght400_grad0_opsz24_png);
+        }
+        else
+        {
+            lv_img_set_src(ui_batteryIcon, &ui_img_battery_android_frame_alert_24dp_e3e3e3_fill0_wght400_grad0_opsz24_png);
+        }
     }
 
     // Monitor connection status when BLE is active
